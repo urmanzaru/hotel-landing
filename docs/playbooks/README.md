@@ -22,7 +22,7 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | 🟡 Falta validar con el sitio publicado |
 | 07  | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md)   | Pipeline, publicación y rollback                                      | 01 (esqueleto), 06 (final) | 🟡 Código listo; falta configurar GitHub y desplegar |
 | 08  | [Pruebas y calidad](./08-pruebas-y-calidad.md)                 | Unit, e2e, checklist de release                                       | transversal                | 🟡 Automático completo; falta checklist de release en staging |
-| 09  | [Operación y replicación a otros hoteles](./09-operacion-y-nuevos-clientes.md) | Runbooks, pedidos al backend, alta de cliente         | 07                         | ⏭ Siguiente  |
+| 09  | [Operación y replicación a otros hoteles](./09-operacion-y-nuevos-clientes.md) | Runbooks, pedidos al backend, alta de cliente         | 07                         | 🟡 Código y guías listos; falta operar con el sitio publicado |
 
 ```
 00 → 01 ─┬→ 02 ─┬→ 04 ─┐
@@ -39,6 +39,7 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | Origen en desarrollo       | El PMS tiene registrado `http://localhost:4202` como `url` del hotel. **El sitio siempre debe correr en el puerto 4202** (`npm run dev`); si está ocupado, el comando falla a propósito.                                                                                                                                                  |
 | Hosting                    | Solo FTP. **No hay acceso al servidor ni al dominio** y no se puede pedir nada más. Se descarta el staging en subdominio; ver el ajuste en [07](./07-ci-cd-y-despliegue-ftp.md).                                                                                                                                                         |
 | Logo                       | Solo existe el PNG (≈770 px). Se usa tal cual en tamaños pequeños y se vectoriza si hace falta (ver [03](./03-sistema-de-diseno.md)).                                                                                                                                                                                                    |
+| Varios hoteles | **Un repositorio, varios hoteles** (09): `clients/<slug>.config.ts` por hotel y Environments `<slug>-staging` / `<slug>-production`; un arreglo llega a todos. Peticiones al backend en `docs/backend/peticiones.md`. |
 
 ## Preguntas abiertas
 

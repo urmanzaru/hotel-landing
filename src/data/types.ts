@@ -89,6 +89,8 @@ export const snapshotSchema = z.object({
   contentHash: z.string(),
   hotel: publicHotelSchema,
   roomTypes: z.array(publicRoomTypeSchema),
+  /** Slugs anteriores de habitaciones renombradas → id (src/data/slug-aliases.ts). */
+  roomSlugAliases: z.record(z.string(), z.string()).default({}),
   images: z.record(z.string(), imageAssetSchema),
   stats: z.object({
     roomTypesTotal: z.number().int(),

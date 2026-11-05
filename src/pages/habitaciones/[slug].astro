@@ -1,13 +1,29 @@
 ---
+import MovedPage from '../../components/MovedPage.astro';
 import { getSnapshot } from '../../data/load.ts';
+import { roomRedirects } from '../../data/slug-aliases.ts';
+import { roomUrl } from '../../lib/routes.ts';
 import RoomView from '../../views/RoomView.astro';
 
 export function getStaticPaths() {
-  return getSnapshot().roomTypes.map((room) => ({ params: { slug: room.slug } }));
+  const snapshot = getSnapshot();
+  return [
+    ...snapshot.roomTypes.map((room) => ({ params: { slug: room.slug }, props: {} })),
+    // Slugs anteriores de habitaciones renombradas: respaldo del 301 del .htaccess (src/data/slug-aliases.ts).
+    ...roomRedirects(snapshot).map(({ from, to }) => ({
+      params: { slug: from },
+      props: { movedTo: to },
+    })),
+  ];
 }
 
 const { slug } = Astro.params;
+const { movedTo } = Astro.props as { movedTo?: string };
 if (!slug) throw new Error('Falta el slug de la habitación');
 ---
 
-<RoomView locale="es" slug={slug} />
+{movedTo ? (
+  <MovedPage target={roomUrl('es', movedTo)} lang="es" />
+) : (
+  <RoomView locale="es" slug={slug} />
+)}

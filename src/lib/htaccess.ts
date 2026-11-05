@@ -8,6 +8,7 @@
  */
 import { createHash } from 'node:crypto';
 import { htaccessRedirects } from './legacy.ts';
+import { routes } from './routes.ts';
 
 export interface HtaccessOptions {
   /** Base del sitio: `/` (producción) o `/nuevo/` (staging). */
@@ -24,6 +25,8 @@ export interface HtaccessOptions {
   turnstile: boolean;
   /** Reglas propias del hosting que hay que conservar (se copian al principio). */
   extra?: string | undefined;
+  /** Habitaciones renombradas: slug anterior → actual (`roomRedirects()` de src/data/slug-aliases.ts). */
+  roomRedirects?: readonly { from: string; to: string }[] | undefined;
 }
 
 const TURNSTILE = 'https://challenges.cloudflare.com';
@@ -72,6 +75,26 @@ export function contentSecurityPolicy(options: HtaccessOptions): string {
 }
 
 const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function slugOnly(slug: string): string {
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+    throw new Error(`Slug de habitación no válido: "${slug}"`);
+  return slug;
+}
+
+/** `RedirectMatch 301` del slug anterior al actual, en cada idioma (`/habitaciones/`, `/en/rooms/`). */
+function roomRedirectLines(
+  base: string,
+  redirects: readonly { from: string; to: string }[],
+): string[] {
+  const prefix = base.replace(/\/+$/, '');
+  return redirects.flatMap(({ from, to }) =>
+    Object.values(routes.rooms).map(
+      (rooms) =>
+        `RedirectMatch 301 ^${escapeRegex(`${prefix}${rooms}${slugOnly(from)}`)}/?$ ${prefix}${rooms}${slugOnly(to)}/`,
+    ),
+  );
+}
 
 export function buildHtaccess(options: HtaccessOptions): string {
   const origin = new URL(safe('origin', options.origin));
@@ -126,11 +149,12 @@ export function buildHtaccess(options: HtaccessOptions): string {
 
   sections.push(
     [
-      '# Rutas del sitio Angular anterior (src/lib/legacy.ts).',
+      '# Rutas del sitio Angular anterior (src/lib/legacy.ts) y slugs anteriores de habitaciones renombradas.',
       '<IfModule mod_alias.c>',
       ...htaccessRedirects(base)
         .split('\n')
         .map((line) => `  ${line}`),
+      ...roomRedirectLines(base, options.roomRedirects ?? []).map((line) => `  ${line}`),
       '</IfModule>',
     ].join('\n'),
   );

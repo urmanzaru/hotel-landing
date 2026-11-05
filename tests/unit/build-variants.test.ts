@@ -212,6 +212,59 @@ describe('variante: hotel sin habitaciones, fotos, políticas ni contacto', () =
   });
 });
 
+describe('variante: habitación renombrada en el PMS (alias de slug, playbook 09)', () => {
+  let outDir = '';
+  let build_: ReturnType<typeof build>;
+  let room = { id: '', slug: '' };
+  beforeAll(async () => {
+    const snapshot = JSON.parse(await readFile(fixtureSnapshot, 'utf8')) as {
+      roomTypes: { id: string; slug: string }[];
+      roomSlugAliases?: Record<string, string>;
+    };
+    const first = snapshot.roomTypes[0];
+    if (!first) throw new Error('la muestra no tiene habitaciones');
+    room = first;
+    snapshot.roomSlugAliases = { 'nombre-anterior': first.id };
+    const aliasPath = path.join(work, 'alias.json');
+    await writeFile(aliasPath, JSON.stringify(snapshot));
+    const env = { SNAPSHOT_PATH: aliasPath, BASE_PATH: '/nuevo/' };
+    build_ = build('alias', env);
+    outDir = build_.outDir;
+    // El postbuild de `npm run build`: escribe el .htaccess con los 301 de los alias.
+    const htaccess = spawnSync(process.execPath, ['--import', 'tsx', 'scripts/write-htaccess.ts'], {
+      cwd: root,
+      encoding: 'utf8',
+      env: cleanEnv({ ...env, OUT_DIR: outDir }),
+      timeout: TIMEOUT,
+    });
+    if (htaccess.status !== 0) throw new Error(htaccess.stderr);
+  }, TIMEOUT);
+
+  it('el build termina bien', () => {
+    expect(build_.status, build_.output).toBe(0);
+  });
+
+  it('la URL anterior lleva a la actual en cada idioma (respaldo sin .htaccess), sin indexarse', async () => {
+    for (const [old, current] of [
+      ['habitaciones/nombre-anterior/index.html', `/nuevo/habitaciones/${room.slug}/`],
+      ['en/rooms/nombre-anterior/index.html', `/nuevo/en/rooms/${room.slug}/`],
+    ] as const) {
+      const html = await read(outDir, old);
+      expect(html, old).toContain(`content="0; url=${current}"`);
+      expect(html, old).toContain('<meta name="robots" content="noindex"');
+      expect(html, old).toContain(`href="http://localhost:4202${current}"`);
+    }
+  });
+
+  it('el .htaccess lleva el 301 y el sitemap no incluye la URL anterior', async () => {
+    const htaccess = await read(outDir, '.htaccess');
+    expect(htaccess).toContain(
+      `RedirectMatch 301 ^/nuevo/habitaciones/nombre-anterior/?$ /nuevo/habitaciones/${room.slug}/`,
+    );
+    expect(await read(outDir, 'sitemap.xml')).not.toContain('nombre-anterior');
+  });
+});
+
 describe('variante: datos reales (dataSource: api)', () => {
   let outDir = '';
   let build_: ReturnType<typeof build>;

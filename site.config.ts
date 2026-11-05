@@ -1,10 +1,10 @@
-import lacabana from './clients/lacabana.config.ts';
+import { CLIENTS } from './clients/index.ts';
 import type { ClientConfig } from './clients/types.ts';
 
-/** Clientes disponibles. Para dar de alta uno nuevo: crear su archivo en `clients/` y registrarlo aquí. */
-export const clients: Record<string, ClientConfig> = {
-  [lacabana.slug]: lacabana,
-};
+/** Clientes disponibles, por slug. Alta de uno nuevo: `npm run client:new` (ver docs/runbooks/nuevo-cliente.md). */
+export const clients: Record<string, ClientConfig> = Object.fromEntries(
+  CLIENTS.map((client) => [client.slug, client]),
+);
 
 export const DEFAULT_CLIENT = 'lacabana';
 

@@ -1,12 +1,11 @@
 ---
 /**
- * Respaldo de las rutas del sitio Angular anterior (`/roomTypes`, `/contactUS`…): redirección inmediata a la página
- * nueva, `canonical` hacia ella y `noindex`. La redirección buena es el 301 del `.htaccess` (playbook 07, generado
- * con `htaccessRedirects()`); esta página cubre el caso de que el `.htaccess` falte o falle. No entra al sitemap.
+ * Respaldo de las rutas del sitio Angular anterior (`/roomTypes`, `/contactUS`…): ver `MovedPage`. La redirección
+ * buena es el 301 del `.htaccess` (playbook 07, generado con `htaccessRedirects()`).
  */
+import MovedPage from '../components/MovedPage.astro';
 import { LEGACY_REDIRECTS } from '../lib/legacy.ts';
 import { routes, routeUrl, type RouteKey } from '../lib/routes.ts';
-import { absoluteUrl } from '../lib/seo.ts';
 import { siteConfig } from '../lib/site.ts';
 
 export function getStaticPaths() {
@@ -17,25 +16,8 @@ export function getStaticPaths() {
 }
 
 const { to } = Astro.props as { to: RouteKey };
-const target = routeUrl(to, siteConfig.defaultLocale);
-const canonical = absoluteUrl(siteConfig.origin, target);
 // Comprobación en build: la ruta destino existe en el mapa.
 if (!routes[to]) throw new Error(`Redirección a una ruta inexistente: ${to}`);
 ---
 
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <meta http-equiv="refresh" content={`0; url=${target}`} />
-    <link rel="canonical" href={canonical} />
-    <title>Esta página se movió</title>
-  </head>
-  <body>
-    <p>
-      Esta página se movió a <a href={target}>{canonical}</a>.
-    </p>
-  </body>
-</html>
+<MovedPage target={routeUrl(to, siteConfig.defaultLocale)} lang="es" />

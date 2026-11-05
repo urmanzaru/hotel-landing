@@ -113,6 +113,18 @@ describe('buildHtaccess', () => {
     }
   });
 
+  it('redirige el slug anterior de una habitación renombrada, en los dos idiomas y con la base', () => {
+    const redirects = [{ from: 'doble', to: 'doble-vista-al-mar' }];
+    const prod = buildHtaccess({ ...base, roomRedirects: redirects });
+    expect(prod).toContain(
+      'RedirectMatch 301 ^/habitaciones/doble/?$ /habitaciones/doble-vista-al-mar/',
+    );
+    expect(prod).toContain('RedirectMatch 301 ^/en/rooms/doble/?$ /en/rooms/doble-vista-al-mar/');
+    expect(buildHtaccess({ ...base, base: '/nuevo/', roomRedirects: redirects })).toContain(
+      'RedirectMatch 301 ^/nuevo/habitaciones/doble/?$ /nuevo/habitaciones/doble-vista-al-mar/',
+    );
+  });
+
   it('redirige las rutas del sitio anterior con 301', () => {
     expect(out).toContain('RedirectMatch 301 ^/roomTypes/?$ /habitaciones/');
   });

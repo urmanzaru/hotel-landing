@@ -3,40 +3,61 @@
 **Objetivo:** que el equipo pueda operar el sitio, replicarlo para otro cliente del PMS en horas y pedir al backend
 las mejoras que lo hacen más robusto.
 
-**Prerrequisitos:** 07 desplegado en producción.
+**Prerrequisitos:** 07 desplegado en producción para operar de verdad. Todo lo que no depende del despliegue
+(código, guías, ensayo de alta y de fallos) ya está hecho.
 
-## A. Alta de un nuevo hotel cliente (checklist)
+> **Estado: 🟡 código y documentación completos; falta lo que depende de GitHub, el hosting y el backend.**
+> Decisiones: **un repositorio, varios hoteles** (Environments `<hotel>-staging` / `<hotel>-production`) y las
+> peticiones al backend como documento en el repo.
+
+## Entregables (hechos)
+
+| Archivo | Qué hace |
+| --- | --- |
+| [`docs/runbooks/nuevo-cliente.md`](../runbooks/nuevo-cliente.md) | Sección A paso a paso: PMS, código, logo, hosting, GitHub, lanzamiento, semana 1. |
+| [`docs/runbooks/operacion.md`](../runbooks/operacion.md) | Sección B: cada síntoma con diagnóstico, acción y **cómo se ensayó**; monitoreo. |
+| [`docs/backend/peticiones.md`](../backend/peticiones.md) | Sección C en formato de ticket, con `curl` reproducible y lo esperado. |
+| `npm run client:new` (`scripts/new-client.ts`, `src/lib/new-client.ts`) | Crea `clients/<slug>.config.ts` con datos validados, lo registra en `clients/index.ts` y asigna su puerto de desarrollo. |
+| `clients/index.ts` + `tests/unit/clients.test.ts` | Registro de hoteles; la prueba falla si un cliente no está registrado o tiene datos inválidos. |
+| `.github/workflows/deploy.yml` + `npm run deploy:matrix` (`src/lib/deploy-matrix.ts`) | Job `plan`: qué hotel va a qué Environment (manual, push, programado, aviso del PMS). Variable `AUTO_TARGETS`. Escucha `repository_dispatch: pms-content-updated` (C.3). |
+| `npm run brand:assets` | Logo e iconos **del cliente elegido** con `CLIENT` (antes, fijo en La Cabaña; la salida de La Cabaña no cambia). |
+| `src/data/slug-aliases.ts` | Si el PMS renombra una habitación, el slug anterior queda como alias: 301 en el `.htaccess` y página de respaldo, en es/en. Antes el runbook pedía editar a mano un `public/.htaccess` que ya no existe. |
+| `tests/unit/contrast.test.ts` | Ahora también revisa los colores del tema de **cada cliente**. |
+
+## A. Alta de un nuevo hotel cliente
+
+Checklist resumido; los comandos están en la [guía de alta](../runbooks/nuevo-cliente.md).
 
 1. **PMS**: el hotel existe, tiene `url` = dominio exacto del sitio (con `https://` y con/sin `www` según
    corresponda), imágenes y tipos de habitación activos. *Sin esto la API responde 403.*
-2. **Código**: crear `clients/<slug>.config.ts` (`hotelId`, `origin`, idiomas, tema, coordenadas, WhatsApp,
-   redes, imagen del hero opcional) y los tokens de marca (sección "tokens por cliente" de 03).
-3. **Logo y marca**: logo vectorial, colores y tipografía aprobados; revisar contraste.
-4. **GitHub**: crear `Environments` (`staging`, `production`) con secretos y variables de 07 para el cliente
-   (un workflow por cliente o una matriz por `CLIENT`).
-5. **Hosting**: FTP/FTPS, subdominio de pruebas, respaldo del sitio vigente.
+2. **Código**: `npm run client:new -- <slug> --hotel-id … --lat … --lng …` y revisar el archivo (horas, WhatsApp,
+   Turnstile).
+3. **Logo y marca**: `docs/brand/<slug>-logo-source.png` → `CLIENT=<slug> npm run brand:assets`; colores en
+   `theme` (el contraste lo vigila `npm test`).
+4. **GitHub**: Environments `<slug>-staging` y `<slug>-production` con los secretos y variables de 07, y el hotel
+   en `AUTO_TARGETS`.
+5. **Hosting**: FTP/FTPS, respaldo del sitio vigente, reglas propias en `clients/<slug>.htaccess`. (El staging va
+   en una subcarpeta del dominio: no hay subdominio de pruebas, ver 07.)
 6. **Contenido**: revisar con el hotel las políticas y las descripciones en es/en.
 7. **Lanzamiento**: checklist de 08 → cutover de 07.
 8. **Post-lanzamiento (semana 1)**: revisar cotizaciones recibidas, errores del formulario, Search Console.
 
 ## B. Runbooks
 
-| Síntoma | Diagnóstico | Acción |
-|---|---|---|
-| El sitio muestra datos viejos | ¿Falló el último `deploy.yml` programado? | Re-ejecutar con `workflow_dispatch`; revisar el paso `data:fetch`. |
-| El build falla en `data:fetch` | 403 → `Origin`/`SITE_ORIGIN` mal; 5xx → API caída; esquema → cambió el PMS | Corregir la variable, esperar a la API o ajustar el esquema (la prueba de contrato lo muestra). |
-| Imagen no aparece (placeholder) | La API devuelve 404 para esa imagen (`reports/broken-images.json`) | Pedir al hotel que la vuelva a subir al PMS; el siguiente build la recoge. |
-| Formulario responde "no pudimos enviarla" | Probar `curl -X POST` con el mismo `Origin`; 403 → `url` del hotel mal registrada | Corregir en el PMS; mientras tanto el huésped ve WhatsApp/correo. |
-| Muchos registros basura en cotizaciones | Spam directo a la API | Activar Turnstile (05) y pedir rate limit a backend. |
-| Cambió el nombre de una habitación y se rompió un enlace | Cambió el slug | Agregar `Redirect 301` en `public/.htaccess`. |
-| Sitio caído tras un deploy | Cambio de código o `.htaccess` | Rollback de 07. |
+En [`docs/runbooks/operacion.md`](../runbooks/operacion.md). Cambios respecto al plan original:
 
-Monitoreo mínimo: monitor de disponibilidad externo gratuito (UptimeRobot o similar) sobre la portada y un chequeo
-semanal manual del formulario.
+- «El formulario no envía»: el diagnóstico era `curl -X POST`, que **crea registros en el PMS** (la API no valida).
+  Ahora es `npm run api:verify` con el `SITE_ORIGIN` del sitio (solo `GET` y el preflight).
+- «Se renombró una habitación»: ya no requiere intervención (alias automáticos).
+- «Datos viejos» y «falla el build» incluyen `AUTO_TARGETS`, el job `plan` y `data:assert-live`.
+
+Monitoreo mínimo: monitor de disponibilidad externo gratuito (UptimeRobot o similar) sobre la portada de cada hotel
+y un chequeo semanal manual del formulario.
 
 ## C. Peticiones al backend del PMS (por prioridad)
 
-Todas salen del levantamiento `api-endpoints.md`.
+Redactadas como tickets, con ejemplo reproducible, en [`docs/backend/peticiones.md`](../backend/peticiones.md). La
+del webhook (3) ya está lista del lado del sitio: `deploy.yml` escucha `pms-content-updated`.
 
 1. **`GET /hotel` debe filtrar por `Origin`** (hoy devuelve los 4 hoteles con RFC, razón social, correos y
    teléfonos). Es una fuga de datos y, además, obliga a elegir por id fijo.
@@ -65,6 +86,12 @@ Todas salen del levantamiento `api-endpoints.md`.
 
 ## Criterios de aceptación
 
-- Un desarrollador que no participó puede dar de alta un segundo hotel (en staging) siguiendo solo la sección A.
-- Cada runbook de B se ensayó al menos una vez (simulando el fallo).
-- Las peticiones de C están registradas como tickets con su ejemplo reproducible.
+- [x] Un desarrollador que no participó puede dar de alta un segundo hotel (en staging) siguiendo solo la sección A.
+      *Ensayado con `hotel-mar` en una copia del repo hasta el build, `dev` y la matriz de despliegue; el ensayo
+      encontró y dejó corregidos dos fallos ([operación](../runbooks/operacion.md#ensayo-en-la-nube-2026-11-05)). Falta
+      la parte de GitHub y hosting, que depende de 07.*
+- [ ] Cada runbook de B se ensayó al menos una vez (simulando el fallo). *Cubiertos por pruebas automáticas que
+      simulan el fallo (columna «Ensayo») y la API inaccesible a mano; quedan el rollback y el aviso del PMS, que
+      necesitan el despliegue real.*
+- [ ] Las peticiones de C están registradas como tickets con su ejemplo reproducible. *Redactadas en
+      `docs/backend/peticiones.md`; falta pasarlas al gestor del backend.*

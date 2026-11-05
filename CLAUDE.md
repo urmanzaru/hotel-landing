@@ -25,6 +25,14 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
 - Se publica solo con `.github/workflows/deploy.yml`; operación en `docs/runbooks/cutover.md`. Las acciones van
   fijadas por SHA; las credenciales FTP solo existen como secretos de GitHub.
 
+## Varios hoteles (playbook 09)
+
+- Un repositorio, varios hoteles: `clients/<slug>.config.ts` registrado en `clients/index.ts` (alta con
+  `npm run client:new`; guía en `docs/runbooks/nuevo-cliente.md`). Nada específico de un hotel en `src/`.
+- Cada hotel publica en los Environments `<slug>-staging` / `<slug>-production`; los automáticos los decide la
+  variable `AUTO_TARGETS` (`src/lib/deploy-matrix.ts`). Operación: `docs/runbooks/operacion.md`.
+- Para probar con otro hotel: `CLIENT=<slug>` en cualquier comando (`dev` usa el puerto de su `origin`).
+
 ## Sistema de diseño
 
 Guía completa en `docs/brand/design-system.md`; se ve en `http://localhost:4202/design/` (solo en desarrollo; para

@@ -11,6 +11,8 @@ import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { loadEnv } from 'vite';
 import { loadSiteConfig, normalizeBase } from '../site.config.ts';
+import { getSnapshot } from '../src/data/load.ts';
+import { roomRedirects } from '../src/data/slug-aliases.ts';
 import { buildHtaccess, cacheHtaccess, inlineScriptHashes } from '../src/lib/htaccess.ts';
 
 const root = process.cwd();
@@ -49,6 +51,7 @@ await writeFile(
     noindex: config.noindex,
     turnstile: Boolean(config.quote?.turnstileSiteKey),
     extra,
+    roomRedirects: roomRedirects(getSnapshot()),
   }),
   'utf8',
 );

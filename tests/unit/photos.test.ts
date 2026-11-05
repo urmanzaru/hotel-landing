@@ -42,6 +42,7 @@ function snapshot(missing: string[] = []): Snapshot {
     contentHash: 'x',
     hotel: core.hotel,
     roomTypes: core.roomTypes,
+    roomSlugAliases: {},
     images,
     stats: {
       roomTypesTotal: 0,

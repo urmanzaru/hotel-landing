@@ -163,6 +163,30 @@ describe('runPipeline (con la API disponible)', () => {
   });
 });
 
+describe('runPipeline (alias de slugs)', () => {
+  it('si el PMS renombra una habitación, el slug anterior queda como alias de su id', async () => {
+    await runPipeline({ client: okClient, config, fetchImage: fakeFetcher(), ...paths() });
+    const first = snapshotSchema.parse(JSON.parse(await readFile(paths().snapshotPath, 'utf8')));
+    const room = first.roomTypes[0];
+    if (!room) throw new Error('la fixture no tiene habitaciones');
+
+    const renamed = (read('roomType') as { id: string; esName: string }[]).map((raw) =>
+      raw.id === room.id ? { ...raw, esName: `${raw.esName} Renovada` } : raw,
+    );
+    const renamingClient: ApiClient = {
+      async getMessage(pathname) {
+        return pathname === '/roomType' ? renamed : okClient.getMessage(pathname);
+      },
+    };
+    await runPipeline({ client: renamingClient, config, fetchImage: fakeFetcher(), ...paths() });
+    const second = snapshotSchema.parse(JSON.parse(await readFile(paths().snapshotPath, 'utf8')));
+    expect(second.roomTypes.find((item) => item.id === room.id)?.slug).toBe(
+      `${room.slug}-renovada`,
+    );
+    expect(second.roomSlugAliases).toEqual({ [room.slug]: room.id });
+  });
+});
+
 describe('runPipeline (política de fallo)', () => {
   it('sin API y sin caché: falla y NO escribe snapshot', async () => {
     await expect(
@@ -239,6 +263,7 @@ describe('assertSnapshotSane', () => {
       imageIds: [],
       politics: [],
     },
+    roomSlugAliases: {},
     roomTypes: [
       {
         id: 'r',

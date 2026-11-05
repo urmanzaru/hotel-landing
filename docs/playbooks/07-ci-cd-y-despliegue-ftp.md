@@ -40,14 +40,18 @@ Todas las acciones están fijadas por SHA (con su versión en un comentario), en
 `images:check` → `test:e2e` → `test:apache` (instala `apache2`) → `lhci`. Los informes de Playwright y Lighthouse
 se guardan como artefacto.
 
-### `deploy.yml` — `push` a `main`, `schedule` (`17 */6 * * *`), `workflow_dispatch` (`target`, `dry_run`, `redeploy_run_id`)
+### `deploy.yml` — `push` a `main`, `schedule` (`17 */6 * * *`), `repository_dispatch` (`pms-content-updated`), `workflow_dispatch` (`client`, `target`, `dry_run`, `redeploy_run_id`)
 
-Destino: push → `staging`; programado → `vars.SCHEDULED_TARGET` (staging hasta el cutover); manual → el elegido.
-Push y programado solo corren con la variable de repositorio `DEPLOY_ENABLED=true` (evita fallos cada 6 h antes de
-configurar los secretos). Con `redeploy_run_id` se salta la construcción y se sube el `dist/` guardado de esa
-ejecución (rollback rápido). Lo que sigue es el camino normal:
+> **Actualizado en 09 (varios hoteles en un repositorio):** un job `plan` (`npm run deploy:matrix`,
+> `src/lib/deploy-matrix.ts`) decide qué hotel va a qué destino y el job de publicación corre una vez por cada uno,
+> en el Environment `<hotel>-<destino>`. Manual → el hotel y el destino elegidos; push → el staging de cada hotel de
+> la variable `AUTO_TARGETS`; programado y aviso del PMS → cada hotel de `AUTO_TARGETS` a su destino. Sustituye a
+> `DEPLOY_ENABLED` y `SCHEDULED_TARGET`.
 
-1. `concurrency: deploy-${{ inputs.target }}` (una sola ejecución a la vez, sin cancelar a medias).
+Con `redeploy_run_id` se salta la construcción y se sube el `dist/` guardado de esa ejecución (rollback rápido). Lo
+que sigue es el camino normal:
+
+1. `concurrency: deploy-<hotel>-<destino>` (una sola ejecución a la vez, sin cancelar a medias).
 2. Checkout, Node 22 con caché de npm, `npm ci`.
 3. Restaurar caché del último snapshot e imágenes (`actions/cache`).
 4. `npm run data:fetch` con `PUBLIC_API_URL`, `HOTEL_ID`, `SITE_ORIGIN` → falla si no pasa los umbrales (02).
@@ -74,11 +78,12 @@ ejecución (rollback rápido). Lo que sigue es el camino normal:
 | `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` | Secreto | por entorno (`staging` y `production`) |
 | `FTP_PROTOCOL` | Variable | `ftps` o `ftp` |
 | `FTP_DIR` | Variable | `/public_html/` o carpeta del subdominio de pruebas |
-| `PUBLIC_API_URL`, `HOTEL_ID`, `SITE_ORIGIN`, `CLIENT` | Variable | por entorno |
+| `PUBLIC_API_URL`, `HOTEL_ID`, `SITE_ORIGIN` | Variable | por entorno |
 | `BASE_PATH`, `NOINDEX`, `SITE_URL` | Variable | staging: `/nuevo/`, `1`, `https://<dominio>/nuevo/` |
-| `DEPLOY_ENABLED`, `SCHEDULED_TARGET` | Variable del repositorio | `true`; `staging` → `production` tras el cutover |
+| `AUTO_TARGETS` | Variable del repositorio | `{"lacabana":"staging"}` → `"production"` tras el cutover (09) |
 
-Usar **Environments** de GitHub; `production` con aprobación manual requerida.
+Usar **Environments** de GitHub, uno por hotel y destino (`lacabana-staging`, `lacabana-production`); los de
+producción con aprobación manual requerida.
 
 ## `.htaccess` del sitio nuevo (todo dentro de `<IfModule>` para no romper si falta un módulo) — ✅ generado y probado
 

@@ -12,6 +12,7 @@ import type { SiteConfig } from '../../site.config.ts';
 import type { ApiClient } from './client.ts';
 import { processImages, pruneImages, type ImageFetcher } from './images.ts';
 import { buildSnapshotCore } from './mappers.ts';
+import { carrySlugAliases, roomRedirects } from './slug-aliases.ts';
 import { snapshotSchema, type BrokenImage, type ImageSource, type Snapshot } from './types.ts';
 
 export interface PipelineOptions {
@@ -83,6 +84,7 @@ async function buildFromApi(options: PipelineOptions): Promise<PipelineResult> {
   const content = {
     hotel: core.hotel,
     roomTypes: core.roomTypes,
+    roomSlugAliases: {},
     images: assets,
   };
   const snapshot: Snapshot = {
@@ -138,6 +140,11 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   let result: PipelineResult;
   try {
     result = await buildFromApi(options);
+    // Habitaciones renombradas: sus slugs anteriores siguen funcionando (301), comparando con el último bueno.
+    const roomSlugAliases = carrySlugAliases(await readCachedSnapshot(lastGood), result.snapshot);
+    result = { ...result, snapshot: { ...result.snapshot, roomSlugAliases } };
+    for (const { from, to } of roomRedirects(result.snapshot))
+      log(`Alias de habitación: ${from} → ${to}`);
     await writeJson(lastGood, result.snapshot);
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);

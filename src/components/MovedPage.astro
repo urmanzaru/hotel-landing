@@ -1,0 +1,39 @@
+---
+/**
+ * Página de respaldo de una URL que se movió (rutas del Angular anterior, slugs de habitaciones renombradas):
+ * redirección inmediata, `canonical` hacia la nueva y `noindex`. La redirección buena es el 301 del `.htaccess`; esta
+ * página cubre el caso de que el `.htaccess` falte o falle. No entra al sitemap.
+ */
+import { absoluteUrl } from '../lib/seo.ts';
+import { siteConfig } from '../lib/site.ts';
+
+interface Props {
+  /** Ruta nueva, con la base (`/nuevo/habitaciones/x/`). */
+  target: string;
+  lang: string;
+}
+
+const { target, lang } = Astro.props;
+const canonical = absoluteUrl(siteConfig.origin, target);
+const text =
+  lang === 'en'
+    ? { title: 'This page has moved', body: 'This page has moved to' }
+    : { title: 'Esta página se movió', body: 'Esta página se movió a' };
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <link rel="canonical" href={canonical} />
+    <title>{text.title}</title>
+  </head>
+  <body>
+    <p>
+      {text.body} <a href={target}>{canonical}</a>.
+    </p>
+  </body>
+</html>
