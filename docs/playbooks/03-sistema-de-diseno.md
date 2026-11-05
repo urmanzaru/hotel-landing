@@ -1,72 +1,86 @@
 # 03 — Sistema de diseño (con ui-ux-pro-max)
 
-**Objetivo:** identidad visual coherente y tematizable por cliente: tokens, tipografía, componentes base y reglas de
-movimiento, derivados del logo de La Cabaña y de la guía que genere `ui-ux-pro-max`.
+> **Estado: ✅ completado.** Guía de diseño: [`docs/brand/design-system.md`](../brand/design-system.md).
+> Galería viva: `npm run dev` → http://localhost:4202/design/ (no se publica).
 
-**Prerrequisitos:** 01 completo. Skill `ui-ux-pro-max` instalada como skill de proyecto (✅, ver `README.md`):
+**Objetivo:** identidad visual coherente y tematizable por cliente: tokens, tipografía, componentes base y reglas de
+movimiento, derivados del logo de La Cabaña y de la guía de `ui-ux-pro-max`.
+
+**Prerrequisitos:** 01 completo. Skill `ui-ux-pro-max` instalada como skill de proyecto (✅, ver `README.md`).
 
 ```bash
-python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<consulta>" --design-system -p "Hotel La Cabaña" --output-dir .
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<consulta>" --design-system --stack astro
 ```
 
-> Se ejecuta con la ruta del proyecto, no con `${CLAUDE_PLUGIN_ROOT}` (ver `CLAUDE.md`). Con `--persist` la skill
-> genera `design-system/<proyecto>/MASTER.md`; este playbook guarda ahí su salida y las decisiones tomadas.
-> Pasar `--stack astro` para las guías específicas de la pila.
+> Se ejecuta con la ruta del proyecto, no con `${CLAUDE_PLUGIN_ROOT}` (ver `CLAUDE.md`).
 
-## Brief para la skill
+## Entregables (hechos)
 
-- **Producto:** sitio de hotel familiar frente al mar en Puerto Ángel, Oaxaca. "Higiénico, confortable y familiar".
-- **Objetivo del usuario:** ver cómo es el hotel, comparar habitaciones y pedir cotización en pocos toques, sobre
-  todo desde celular.
-- **Marca (logo):** marrón oscuro sobre crema, serifa clásica, motivo de olas y peces. Referencia en
-  `docs/brand/logo-lacabana-source.png`. Colores aproximados a **muestrear con un cuentagotas** del archivo:
-  marrón ≈ `#6B3220`, crema ≈ `#FFE5B0`.
-- **Tono:** cálido, costero, artesanal; no corporativo. Fotografía grande, mucho aire.
-- **Restricciones:** móvil primero, cargar rápido en redes lentas, WCAG 2.2 AA, es/en, sin dependencias de CDNs.
-
-## Entregables
-
-- `docs/brand/design-system.md` (salida de la skill + decisiones tomadas).
-- `src/styles/tokens.css`: variables CSS (color, tipografía, espaciado, radios, sombras, z-index, duración).
-- `src/styles/base.css`: reset, tipografía, foco visible, `prefers-reduced-motion`.
-- Componentes base documentados en `/design` (página interna, excluida del sitemap y de producción).
+- `docs/brand/design-system.md`: concepto, decisiones (incluye qué se adoptó y qué se descartó de la skill y por qué),
+  tokens, componentes, reglas y verificación.
+- `src/styles/tokens.css` y `src/styles/base.css`.
+- 14 componentes en `src/components/` más ayudantes (`src/lib/url.ts`, `routes.ts`, `theme.ts`, `contrast.ts`,
+  `gallery.ts`; `src/i18n/ui.ts`; `src/islands/lightbox.ts`; `src/layouts/Base.astro`).
+- Página interna `/design/` (`src/pages/[dev].astro`): solo en desarrollo o con `DESIGN_PAGE=1`.
+- Logo web en `public/brand/` (`npm run brand:assets`) y 4 ilustraciones SVG de muestra en `src/assets/design-sample/`.
+- 103 pruebas unitarias y 26 e2e (ver "Verificación").
 
 ## Pasos
 
-- [ ] **Extraer paleta** del logo (muestreo real) y definir roles: `--color-brand`, `--color-surface`,
-      `--color-text`, `--color-accent`, `--color-success/danger`, además de escala de grises cálida.
-- [ ] **Ejecutar ui-ux-pro-max** con el brief; revisar propuesta de estilo, paleta, tipografía y patrones de
-      landing de hotel. Registrar qué se adoptó y qué se descartó y por qué.
-- [ ] **Validar contraste**: texto/fondo ≥ 4.5:1, texto grande y componentes UI ≥ 3:1, también en estados
-      hover/focus/disabled. El marrón sobre crema del logo cumple con holgura; verificar el acento.
-- [ ] **Tipografía**: autoalojada (WOFF2 vía `@fontsource-variable/*`), máximo 2 familias, `font-display: swap`,
-      subconjunto latino (incluye `ñ`, `á`, `é`), precarga solo de la fuente principal. Sin Google Fonts en runtime.
-- [ ] **Tokens por cliente**: `tokens.css` define los valores por defecto; `clients/<x>.config.ts` los sobrescribe
-      inyectando un bloque `:root` en el layout. Cambiar de cliente no debe tocar componentes.
-- [ ] **Componentes base**: `Header` (logo + nav + selector de idioma + CTA "Cotizar"), `Footer`, `Button`,
-      `Card`, `RoomCard`, `Gallery` (rejilla + lightbox accesible), `Field`/`Input`/`Select`/`DateInput`,
-      `Alert`, `Section`, `Breadcrumb`, `Picture` (usa el pipeline de 02 con placeholder).
-- [ ] **Movimiento**: transiciones cortas (150–250 ms), nada esencial depende de animación,
-      `@media (prefers-reduced-motion: reduce)` las desactiva.
-- [ ] **Móvil primero**: breakpoints 360 / 768 / 1024 / 1280; objetivos táctiles ≥ 44 px; CTA "Cotizar" siempre
-      alcanzable (barra fija inferior en móvil).
-- [ ] **Modo oscuro**: fuera de v1 (decisión explícita para no duplicar el trabajo de contraste).
+- [x] **Extraer paleta** del logo con muestreo real: marrón `#633222`, crema `#FFE6B1`.
+- [x] **Ejecutar ui-ux-pro-max** (`--design-system` con diales 3/3/3 y búsquedas de producto, estilo, tipografía,
+      color, UX y pila Astro). Adoptado: estilo «Nature Distilled», Karla, guías de foco/formularios/táctil.
+      Descartado con motivo: estilo Swiss minimal, paleta azul/dorado, patrón con testimonios.
+- [x] **Validar contraste**: 33 pares de texto ≥ 4.5:1 y 7 de componentes ≥ 3:1, como prueba automática.
+- [x] **Tipografía autoalojada**: Fraunces (títulos) + Karla (texto), subconjunto latino, ≈ 68 KB, precarga de ambas,
+      sin Google Fonts en runtime.
+- [x] **Tokens por cliente**: `clients/<slug>.config.ts → theme` se inyecta tras `tokens.css` (validado).
+- [x] **Componentes base**: `Header`, `Footer`, `Button`, `Field`, `ErrorSummary`, `Alert`, `RoomCard`, `Picture`,
+      `Gallery` (+ visor), `Section`, `Breadcrumb`, `WaveDivider`, `StickyQuoteBar`. (`Card` genérica no hizo falta:
+      `RoomCard` y `Alert` cubren los usos de v1.)
+- [x] **Movimiento**: transiciones cortas solo con CSS; `prefers-reduced-motion` las desactiva (probado).
+- [x] **Móvil primero**: controles ≥ 44 px (probado), barra fija «Solicitar cotización», menú sin JavaScript.
+- [x] **Modo oscuro**: fuera de v1 (decisión explícita).
 
-## Criterios de aceptación
+## Verificación (criterios de aceptación)
 
 ```bash
-npm run build && npm run test:e2e -- tests/e2e/design.spec.ts
+npm run verify        # tipos + lint + 103 pruebas unitarias + build de producción
+npm run test:e2e      # 26 pruebas: axe, desbordes, visor, menú, táctil, movimiento reducido…
 ```
 
-- La página `/design` muestra todos los componentes en sus estados; axe-core sin violaciones serias o críticas.
-- Cambiar los tokens de `clients/lacabana.config.ts` cambia el aspecto sin editar componentes.
-- Sin peticiones a dominios externos al cargar la portada (fuentes e iconos autoalojados).
-- Lighthouse Accessibility ≥ 95 en `/design`.
+- [x] `/design/` muestra todos los componentes en sus estados; **axe sin violaciones** WCAG 2.2 AA en escritorio y móvil.
+- [x] Cambiar los tokens de `clients/lacabana.config.ts → theme` cambia el aspecto sin editar componentes.
+- [x] Cero peticiones a dominios externos al cargar la página (fuentes e iconos autoalojados).
+- [x] `/design/` **no existe** en el build de producción ni en su sitemap.
+- [ ] **Lighthouse Accessibility ≥ 95**: se mide en el playbook 06 (`@lhci/cli`) sobre páginas reales; aquí la
+      accesibilidad se verifica con axe.
 
-## Riesgos
+## Resultado y desviaciones respecto al plan original
 
-- Que la salida de la skill choque con la identidad real del hotel: la marca manda; la skill propone.
-- Logo en baja resolución (el adjunto es raster, ~770 px de ancho) y **no existe versión vectorial**. Opciones, en
-  orden: (1) usar el PNG con transparencia solo en tamaños ≤ 200 px (se ve nítido en 2×); (2) vectorizar el logo
-  (hay una skill `svg-logo-designer` disponible para recrearlo en SVG) y que el cliente lo apruebe; (3) mostrar el
-  nombre del hotel en tipografía y reservar el logo para favicon y pie de página.
+| Tema | Decisión | Motivo |
+| --- | --- | --- |
+| `frontend-design` | No disponible en este entorno | Se usó `ui-ux-pro-max` + criterio de diseño propio. |
+| Salida de la skill | **No** se persistió `design-system/…/MASTER.md` | Su propuesta (azul marino, Swiss) contradice la marca y la skill pide no persistir salida no verificada. La fuente de verdad es `docs/brand/design-system.md`. |
+| Componente `Card` | No se creó | Ningún uso de v1 lo necesita (YAGNI). |
+| Lighthouse | Pospuesto a 06 | Sin páginas reales no hay nada que medir. |
+| Fotografía | Ilustraciones SVG de muestra | No se inventan fotos del hotel; la página interna usa ilustraciones claramente marcadas «de muestra». |
+
+### Defectos encontrados y corregidos al verificar
+
+Cada uno quedó cubierto por una prueba que **se comprobó que falla sin el arreglo**:
+
+1. **Terracota con contraste 4.43:1** sobre el crema (axe). La prueba de tokens solo lo miraba sobre el fondo claro.
+   Se oscureció a `#9a4626` y se amplió la prueba a todos los fondos.
+2. **Enlace de idioma sin «etiqueta en el nombre»** (WCAG 2.5.3): el `aria-label` no contenía el texto visible «EN».
+3. **Iconos SVG colapsados a 0×0** por `max-width: 100%` en el reinicio de CSS (el botón «Menú» no mostraba icono).
+   La primera versión de la prueba no lo detectaba (el icono medía 0,27 px, no 0): se corrigió el umbral.
+4. **Ola divisora invisible** entre secciones de distinto fondo: faltaba el color de la sección anterior (`from`).
+5. **Nombre del hotel pegado al borde** de la cabecera móvil al recuperar el icono su espacio.
+
+## Riesgos que siguen abiertos
+
+- **Logo en baja resolución** (PNG de ~780 px; no hay vector). Se usa en ≤ 100 px de ancho. Opciones: pedir el
+  SVG/AI al cliente, vectorizarlo (skill `svg-logo-designer`) con su aprobación, o usar solo el nombre en tipografía.
+- **Calidad de las fotos del PMS**: limitará el resultado final; avisar al cliente qué fotos reemplazar.
+- **Diseño no validado con el cliente**: es una propuesta; la aprobación visual del concepto sigue pendiente.

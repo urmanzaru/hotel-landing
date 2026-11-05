@@ -1,0 +1,90 @@
+---
+interface Props {
+  variant?: 'info' | 'success' | 'danger';
+  title?: string;
+}
+const { variant = 'info', title } = Astro.props;
+// Los errores se anuncian de inmediato (`alert`); el resto, de forma cortés (`status`).
+const role = variant === 'danger' ? 'alert' : 'status';
+---
+
+<div class={`alert alert--${variant}`} role={role}>
+  <svg
+    class="alert__icon"
+    viewBox="0 0 24 24"
+    width="22"
+    height="22"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {variant === 'success' ? (
+      <path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.4"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    ) : variant === 'danger' ? (
+      <path
+        d="M12 7v6m0 4h.01M10.3 3.9L2.6 17.5A2 2 0 004.3 20.5h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    ) : (
+      <path
+        d="M12 11v5m0-8.5h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    )}
+  </svg>
+  <div class="alert__body">
+    {title && <p class="alert__title">{title}</p>}
+    <div>
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  .alert {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid currentColor;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .alert--info {
+    --fg: var(--color-info);
+    --bg: var(--color-info-soft);
+  }
+  .alert--success {
+    --fg: var(--color-success);
+    --bg: var(--color-success-soft);
+  }
+  .alert--danger {
+    --fg: var(--color-danger);
+    --bg: var(--color-danger-soft);
+  }
+  .alert__icon {
+    flex: none;
+    margin-top: 0.1rem;
+  }
+  .alert__title {
+    font-weight: 700;
+  }
+  /* El texto usa el color del estado (contraste verificado en los tests de tokens). */
+  .alert__body {
+    color: var(--fg);
+  }
+</style>

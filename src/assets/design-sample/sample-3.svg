@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Ilustración de muestra: peces y olas">
+  <rect width="1200" height="800" fill="#1f5c66"/>
+  <g fill="none" stroke="#ffe6b1" stroke-width="14" stroke-linecap="round" opacity=".85">
+    <path d="M-20 200 Q130 140 280 200 T580 200 T880 200 T1180 200"/>
+    <path d="M-20 340 Q130 280 280 340 T580 340 T880 340 T1180 340"/>
+    <path d="M-20 480 Q130 420 280 480 T580 480 T880 480 T1180 480"/>
+    <path d="M-20 620 Q130 560 280 620 T580 620 T880 620 T1180 620"/>
+  </g>
+  <g fill="#ffe6b1">
+    <path d="M420 400 q70 -60 150 0 q-80 60 -150 0z"/><circle cx="450" cy="392" r="6" fill="#1f5c66"/>
+    <path d="M700 540 q70 -60 150 0 q-80 60 -150 0z"/><circle cx="730" cy="532" r="6" fill="#1f5c66"/>
+  </g>
+</svg>

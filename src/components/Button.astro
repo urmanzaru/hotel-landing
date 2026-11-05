@@ -1,0 +1,107 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'button'> & {
+  /** Con `href` se renderiza un enlace; sin él, un botón. */
+  href?: string | undefined;
+  variant?: 'primary' | 'secondary' | 'ghost' | 'light';
+  size?: 'md' | 'lg';
+};
+
+const { href, variant = 'primary', size = 'md', class: className, ...attrs } = Astro.props;
+const classes = ['btn', `btn--${variant}`, `btn--${size}`, className];
+---
+
+{href ? (
+  <a href={href} class:list={classes} {...(attrs as HTMLAttributes<'a'>)}>
+    <slot />
+  </a>
+) : (
+  <button type="button" class:list={classes} {...attrs}>
+    <slot />
+  </button>
+)}
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--tap-size);
+    padding: var(--space-3) var(--space-5);
+    border: 2px solid transparent;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-out),
+      color var(--duration-fast) var(--ease-out),
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+  .btn--lg {
+    min-height: 3.5rem;
+    padding-inline: var(--space-6);
+    font-size: var(--text-lg);
+  }
+
+  .btn--primary {
+    background: var(--color-brand);
+    color: var(--color-text-on-brand);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn--primary:hover {
+    background: var(--color-brand-strong);
+    color: var(--color-text-on-brand);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn--secondary {
+    background: transparent;
+    color: var(--color-brand);
+    border-color: var(--color-brand);
+  }
+  .btn--secondary:hover {
+    background: var(--color-brand);
+    color: var(--color-text-on-brand);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--color-brand);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+  .btn--ghost:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  /* Sobre fondos oscuros (.on-dark / marca) */
+  .btn--light {
+    background: var(--color-cream);
+    color: var(--color-brand);
+  }
+  .btn--light:hover {
+    background: var(--color-surface);
+    color: var(--color-brand-strong);
+  }
+
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn[disabled],
+  .btn[aria-disabled='true'] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .btn[aria-busy='true'] {
+    cursor: progress;
+  }
+</style>

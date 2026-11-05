@@ -15,6 +15,8 @@ export default defineConfig({
   webServer: {
     // Se prueba el sitio construido, igual que se publica.
     command: `npm run build && npx astro preview --port ${port}`,
+    // La galería interna /design/ solo se genera con esta variable (en producción no existe).
+    env: { DESIGN_PAGE: '1' },
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,

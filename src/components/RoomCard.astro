@@ -1,0 +1,137 @@
+---
+/** Tarjeta de tipo de habitación: foto en arco, nombre (enlace que cubre toda la tarjeta), resumen y llamada a la acción. */
+import type { ImageAsset } from '../data/types.ts';
+import Picture from './Picture.astro';
+
+interface Props {
+  href: string;
+  name: string;
+  /** Línea ya formateada, p. ej. «2 adultos · 1 niño · por noche». */
+  meta: string;
+  description?: string | undefined;
+  cta: string;
+  asset?: ImageAsset | undefined;
+  /** Alternativa a `asset`: imagen suelta (requiere `width` y `height`). */
+  src?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  /** Texto alternativo de la foto (normalmente el nombre del tipo de habitación). */
+  alt?: string | undefined;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const {
+  href,
+  name,
+  meta,
+  description,
+  cta,
+  asset,
+  src,
+  width,
+  height,
+  alt,
+  headingLevel = 'h3',
+} = Astro.props;
+const Heading = headingLevel;
+---
+
+<article class="room">
+  <Picture
+    asset={asset}
+    src={src}
+    width={width}
+    height={height}
+    alt={alt ?? name}
+    ratio="arch"
+    sizes="(min-width: 64rem) 30vw, (min-width: 40rem) 45vw, 92vw"
+  />
+  <div class="room__body">
+    <Heading class="room__name">
+      <a href={href}>{name}</a>
+    </Heading>
+    <p class="room__meta">{meta}</p>
+    {description && <p class="room__desc">{description}</p>}
+    <p class="room__cta" aria-hidden="true">
+      {cta}
+      <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">
+        <path
+          d="M5 12h14M13 6l6 6-6 6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ></path>
+      </svg>
+    </p>
+  </div>
+</article>
+
+<style>
+  .room {
+    position: relative;
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-3) var(--space-5);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--radius-lg) + 0.5rem) calc(var(--radius-lg) + 0.5rem) var(--radius-lg)
+      var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      box-shadow var(--duration-base) var(--ease-out),
+      transform var(--duration-base) var(--ease-out);
+  }
+  .room:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+  .room__body {
+    display: grid;
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+  }
+  .room__name {
+    font-size: var(--text-xl);
+  }
+  .room__name a {
+    color: inherit;
+    text-decoration: none;
+  }
+  /* El enlace cubre toda la tarjeta (un solo destino táctil grande y un solo enlace para lectores de pantalla). */
+  .room__name a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+  }
+  .room__name a:focus-visible {
+    outline: none;
+  }
+  .room:has(.room__name a:focus-visible) {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 3px;
+  }
+  .room__meta {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-sea);
+  }
+  .room__desc {
+    color: var(--color-text-muted);
+  }
+  .room__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+    font-weight: 700;
+    color: var(--color-brand);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .room:hover {
+      transform: none;
+    }
+  }
+</style>

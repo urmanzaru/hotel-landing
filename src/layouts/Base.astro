@@ -1,0 +1,86 @@
+---
+import '@fontsource-variable/fraunces/wght.css';
+import '@fontsource-variable/karla/wght.css';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import frauncesUrl from '@fontsource-variable/fraunces/files/fraunces-latin-wght-normal.woff2?url';
+import karlaUrl from '@fontsource-variable/karla/files/karla-latin-wght-normal.woff2?url';
+import type { Locale } from '../../clients/types.ts';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import StickyQuoteBar from '../components/StickyQuoteBar.astro';
+import { t } from '../i18n/ui.ts';
+import { siteConfig } from '../lib/site.ts';
+import type { RouteKey } from '../lib/routes.ts';
+import { themeCss } from '../lib/theme.ts';
+
+interface Props {
+  title: string;
+  description?: string | undefined;
+  locale?: Locale;
+  current?: RouteKey | undefined;
+  noindex?: boolean;
+  /** Datos públicos del hotel para cabecera y pie (vienen del snapshot). */
+  hotel: {
+    name: string;
+    address?: string | undefined;
+    phones?: string[] | undefined;
+    email?: string | undefined;
+    hasPolicies?: boolean | undefined;
+  };
+  /** Oculta la barra fija de cotización (p. ej. en la propia página de cotización). */
+  hideStickyCta?: boolean;
+}
+
+const {
+  title,
+  description,
+  locale = siteConfig.defaultLocale,
+  current,
+  noindex = false,
+  hotel,
+  hideStickyCta = false,
+} = Astro.props;
+const overrides = themeCss(siteConfig.theme);
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <link rel="preload" href={frauncesUrl} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={karlaUrl} as="font" type="font/woff2" crossorigin />
+    {overrides && <style is:inline set:html={overrides} />}
+  </head>
+  <body class:list={{ 'has-sticky-cta': !hideStickyCta }}>
+    <a class="skip-link" href="#main">
+      {t(locale, 'skip.main')}
+    </a>
+    <Header locale={locale} hotelName={hotel.name} current={current} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer
+      locale={locale}
+      hotelName={hotel.name}
+      address={hotel.address}
+      phones={hotel.phones}
+      email={hotel.email}
+      hasPolicies={hotel.hasPolicies}
+    />
+    {!hideStickyCta && <StickyQuoteBar locale={locale} />}
+  </body>
+</html>
+
+<style is:global>
+  /* Espacio para que la barra fija no tape el final de la página (solo móvil/tablet). */
+  @media (max-width: 63.999rem) {
+    body.has-sticky-cta {
+      padding-bottom: calc(3.5rem + var(--space-5) + env(safe-area-inset-bottom));
+    }
+  }
+</style>

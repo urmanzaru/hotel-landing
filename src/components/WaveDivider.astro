@@ -1,0 +1,40 @@
+---
+/**
+ * Divisor en ola (del motivo del logo) entre dos secciones: `from` es el fondo de la sección anterior (lo que se
+ * ve por encima de la ola) y `color` el de la siguiente (el relleno de la ola). Ambos como valor CSS, p. ej.
+ * `var(--color-cream)`.
+ */
+interface Props {
+  from?: string;
+  color?: string;
+  flip?: boolean;
+}
+const { from = 'var(--color-surface)', color = 'var(--color-surface)', flip = false } = Astro.props;
+---
+
+<div
+  class:list={['wave', { 'wave--flip': flip }]}
+  style={`color: ${color}; background: ${from}`}
+  aria-hidden="true"
+>
+  <svg viewBox="0 0 1440 64" preserveAspectRatio="none" focusable="false">
+    <path
+      fill="currentColor"
+      d="M0 32 C 120 8, 240 8, 360 32 S 600 56, 720 32 S 960 8, 1080 32 S 1320 56, 1440 32 V64 H0 Z"
+    ></path>
+  </svg>
+</div>
+
+<style>
+  .wave {
+    line-height: 0;
+    margin-block: -1px;
+  }
+  .wave svg {
+    width: 100%;
+    height: clamp(2rem, 1rem + 4vw, 4rem);
+  }
+  .wave--flip {
+    transform: scaleY(-1);
+  }
+</style>

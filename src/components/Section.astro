@@ -1,0 +1,64 @@
+---
+interface Props {
+  title?: string;
+  eyebrow?: string;
+  /** Fondo de la sección. `deep` activa los colores de texto claros. */
+  tone?: 'default' | 'cream' | 'sunken' | 'deep';
+  id?: string;
+  narrow?: boolean;
+}
+
+const { title, eyebrow, tone = 'default', id, narrow = false } = Astro.props;
+const headingId = id && title ? `${id}-title` : undefined;
+---
+
+<section
+  id={id}
+  class:list={['section', `section--${tone}`, { 'on-dark': tone === 'deep' }]}
+  aria-labelledby={headingId}
+>
+  <div class:list={['container', { 'container--narrow': narrow }]}>
+    {(eyebrow || title || Astro.slots.has('lead')) && (
+      <header class="section__head">
+        {eyebrow && <p class="eyebrow">{eyebrow}</p>}
+        {title && <h2 id={headingId}>{title}</h2>}
+        {Astro.slots.has('lead') && (
+          <p class="lead">
+            <slot name="lead" />
+          </p>
+        )}
+      </header>
+    )}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-y);
+  }
+  .section--cream {
+    background: var(--color-cream);
+  }
+  .section--sunken {
+    background: var(--color-surface-sunken);
+  }
+  .section--deep {
+    background: var(--color-deep);
+    color: var(--color-text-on-deep);
+  }
+  .section--deep :global(h2),
+  .section--deep :global(h3),
+  .section--deep :global(.eyebrow) {
+    color: var(--color-text-on-deep);
+  }
+  .section--deep :global(.lead) {
+    color: var(--color-text-on-deep-muted);
+  }
+  .section__head {
+    display: grid;
+    gap: var(--space-3);
+    margin-bottom: var(--space-7);
+    max-width: 44rem;
+  }
+</style>

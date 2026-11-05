@@ -1,0 +1,415 @@
+---
+/**
+ * Galería interna del sistema de diseño (`/design/`). NO es parte del sitio público: solo se genera en desarrollo
+ * o al construir con `DESIGN_PAGE=1` (lo hace la prueba e2e). En producción `getStaticPaths` devuelve vacío.
+ */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import Alert from '../components/Alert.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import Button from '../components/Button.astro';
+import ErrorSummary from '../components/ErrorSummary.astro';
+import Field from '../components/Field.astro';
+import Gallery from '../components/Gallery.astro';
+import Picture from '../components/Picture.astro';
+import RoomCard from '../components/RoomCard.astro';
+import Section from '../components/Section.astro';
+import WaveDivider from '../components/WaveDivider.astro';
+import sample1 from '../assets/design-sample/sample-1.svg';
+import sample2 from '../assets/design-sample/sample-2.svg';
+import sample3 from '../assets/design-sample/sample-3.svg';
+import sample4 from '../assets/design-sample/sample-4.svg';
+import Base from '../layouts/Base.astro';
+import { contrastRatio, parseHexTokens } from '../lib/contrast.ts';
+import type { GalleryItem } from '../lib/gallery.ts';
+
+export function getStaticPaths() {
+  const enabled = import.meta.env.DEV || process.env['DESIGN_PAGE'] === '1';
+  return enabled ? [{ params: { dev: 'design' } }] : [];
+}
+
+const tokens = parseHexTokens(
+  readFileSync(path.join(process.cwd(), 'src/styles/tokens.css'), 'utf8'),
+);
+
+const swatches: { token: string; note: string; dark?: boolean }[] = [
+  { token: '--color-brand', note: 'Marrón del logo. Títulos, botones, enlaces.', dark: true },
+  { token: '--color-brand-strong', note: 'Hover/activo del marrón.', dark: true },
+  { token: '--color-cream', note: 'Crema del logo. Fondos de marca, selección.' },
+  { token: '--color-surface', note: 'Fondo de página.' },
+  { token: '--color-surface-raised', note: 'Tarjetas y campos.' },
+  { token: '--color-surface-sunken', note: 'Bandas y placeholders.' },
+  { token: '--color-deep', note: 'Pie de página y visor de fotos.', dark: true },
+  { token: '--color-sea', note: 'Acento de mar: etiquetas, información.', dark: true },
+  { token: '--color-terracotta', note: 'Apoyo: sobretítulos.', dark: true },
+  { token: '--color-text', note: 'Texto principal.', dark: true },
+  { token: '--color-text-muted', note: 'Texto secundario.', dark: true },
+  { token: '--color-border-strong', note: 'Bordes de controles (≥ 3:1).', dark: true },
+];
+
+const pairs: { label: string; fg: string; bg: string }[] = [
+  { label: 'Texto sobre fondo', fg: '--color-text', bg: '--color-surface' },
+  { label: 'Texto secundario sobre fondo', fg: '--color-text-muted', bg: '--color-surface' },
+  { label: 'Marrón sobre fondo', fg: '--color-brand', bg: '--color-surface' },
+  { label: 'Marrón sobre crema (logo)', fg: '--color-brand', bg: '--color-cream' },
+  { label: 'Texto en botón primario', fg: '--color-text-on-brand', bg: '--color-brand' },
+  { label: 'Texto en pie de página', fg: '--color-text-on-deep', bg: '--color-deep' },
+  { label: 'Acento de mar sobre fondo', fg: '--color-sea', bg: '--color-surface' },
+  { label: 'Borde de campo (UI ≥ 3:1)', fg: '--color-border-strong', bg: '--color-surface' },
+];
+const ratio = (fg: string, bg: string) =>
+  contrastRatio(tokens[fg] ?? '#000', tokens[bg] ?? '#fff').toFixed(1);
+
+const samples = [sample1, sample2, sample3, sample4];
+const galleryItems: GalleryItem[] = [
+  {
+    src: sample1.src,
+    width: sample1.width,
+    height: sample1.height,
+    alt: 'Atardecer sobre el mar',
+    caption: 'Ilustración de muestra',
+  },
+  {
+    src: sample2.src,
+    width: sample2.width,
+    height: sample2.height,
+    alt: 'Cabaña frente al mar',
+    caption: 'Ilustración de muestra',
+  },
+  {
+    src: sample3.src,
+    width: sample3.width,
+    height: sample3.height,
+    alt: 'Peces y olas',
+    caption: 'Ilustración de muestra',
+  },
+  {
+    src: sample4.src,
+    width: sample4.width,
+    height: sample4.height,
+    alt: 'Hamaca bajo una palapa',
+    caption: 'Ilustración de muestra',
+  },
+];
+
+const hotel = {
+  name: 'Hotel La Cabaña de Puerto Ángel',
+  address: 'Puerto Ángel, Oaxaca, México',
+  phones: ['000 000 0000'],
+  email: 'contacto@example.com',
+};
+---
+
+<Base title="Sistema de diseño · Hotel La Cabaña" hotel={hotel} noindex>
+  <Section tone="cream" narrow>
+    <Breadcrumb
+      label="Ruta de navegación"
+      items={[{ label: 'Inicio', href: '/' }, { label: 'Sistema de diseño' }]}
+    />
+    <p class="eyebrow" style="margin-top: var(--space-5)">
+      Casa de playa, hecha a mano
+    </p>
+    <h1>Sistema de diseño</h1>
+    <p class="lead" style="margin-top: var(--space-3)">
+      Colores del logo, un acento de mar, la forma de arco como motivo y tipografía cálida. Página
+      interna: no se publica.
+    </p>
+  </Section>
+  <WaveDivider from="var(--color-cream)" color="var(--color-surface)" />
+
+  <Section id="color" eyebrow="Fundamentos" title="Color">
+    <ul role="list" class="swatches">
+      {swatches.map((s) => (
+        <li class="swatch">
+          <div class="swatch__chip" style={`background: var(${s.token})`}></div>
+          <p class="swatch__name">{s.token}</p>
+          <p class="swatch__hex">{tokens[s.token]}</p>
+          <p class="swatch__note">{s.note}</p>
+        </li>
+      ))}
+    </ul>
+    <h3 style="margin-top: var(--space-7)">Contraste verificado</h3>
+    <table class="contrast">
+      <caption class="visually-hidden">
+        Relaciones de contraste entre los pares de colores principales
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Par</th>
+          <th scope="col">Relación</th>
+          <th scope="col">Muestra</th>
+        </tr>
+      </thead>
+      <tbody>
+        {pairs.map((p) => (
+          <tr>
+            <th scope="row">{p.label}</th>
+            <td>{ratio(p.fg, p.bg)} : 1</td>
+            <td>
+              <span
+                class="contrast__sample"
+                style={`color: var(${p.fg}); background: var(${p.bg})`}
+              >
+                Aa Puerto Ángel
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </Section>
+
+  <Section id="tipografia" tone="sunken" eyebrow="Fundamentos" title="Tipografía">
+    <p class="eyebrow">Fraunces (títulos) · Karla (texto)</p>
+    <h1>Hotel familiar frente al mar</h1>
+    <h2 style="margin-top: var(--space-4)">Habitaciones con vista a la bahía</h2>
+    <h3 style="margin-top: var(--space-4)">Desayuno en la terraza</h3>
+    <h4 style="margin-top: var(--space-4)">Servicios incluidos</h4>
+    <p class="lead" style="margin-top: var(--space-5)">
+      Puerto Ángel conserva el ritmo de un pueblo de pescadores: playas tranquilas, café por la
+      mañana y atardeceres que invitan a quedarse.
+    </p>
+    <p style="margin-top: var(--space-3); max-width: 60ch">
+      Texto de párrafo en Karla a 17 px con interlineado de 1.6. Probamos acentos y la eñe: ¡Cabaña,
+      piña, niño, señal, ¿dónde? Habitación sencilla, doble y familiar.
+    </p>
+  </Section>
+
+  <Section id="botones" eyebrow="Componentes" title="Botones">
+    <div class="row">
+      <Button>Cotizar</Button>
+      <Button variant="secondary">Ver habitaciones</Button>
+      <Button variant="ghost">Más información</Button>
+      <Button size="lg">Solicitar cotización</Button>
+      <Button disabled>Deshabilitado</Button>
+      <Button aria-busy="true">Enviando…</Button>
+    </div>
+    <div class="row on-dark panel-dark">
+      <Button variant="light">Cotizar</Button>
+      <Button
+        variant="secondary"
+        style="color: var(--color-cream); border-color: var(--color-cream)"
+      >
+        Secundario
+      </Button>
+    </div>
+  </Section>
+
+  <Section id="formularios" tone="sunken" eyebrow="Componentes" title="Formularios">
+    <div class="grid-2">
+      <form class="form" novalidate>
+        <Field
+          id="f-name"
+          label="Nombre completo"
+          required
+          requiredLabel="obligatorio"
+          autocomplete="name"
+        />
+        <Field
+          id="f-mail"
+          label="Correo electrónico"
+          type="email"
+          required
+          autocomplete="email"
+          inputmode="email"
+          hint="Aquí te enviaremos la cotización."
+        />
+        <Field id="f-phone" label="Teléfono" type="tel" autocomplete="tel" inputmode="tel" />
+        <div class="grid-2">
+          <Field id="f-in" label="Llegada" type="date" required />
+          <Field id="f-out" label="Salida" type="date" required />
+        </div>
+        <Field
+          id="f-adults"
+          label="Adultos"
+          type="select"
+          options={[
+            { value: '1', label: '1' },
+            { value: '2', label: '2' },
+            { value: '3', label: '3' },
+          ]}
+          value="2"
+        />
+        <Field id="f-notes" label="Comentarios" type="textarea" maxlength={500} />
+        <Button type="submit">Enviar solicitud</Button>
+      </form>
+      <div class="form">
+        <ErrorSummary
+          title="Hay un problema con el formulario"
+          errors={[
+            { id: 'e-mail', message: 'Escribe un correo electrónico válido' },
+            { id: 'e-out', message: 'La salida debe ser después de la llegada' },
+          ]}
+        />
+        <Field
+          id="e-mail"
+          label="Correo electrónico"
+          type="email"
+          required
+          value="correo-sin-arroba"
+          error="Escribe un correo electrónico válido, por ejemplo nombre@correo.com"
+        />
+        <Field
+          id="e-out"
+          label="Salida"
+          type="date"
+          required
+          error="La salida debe ser después de la llegada"
+        />
+        <Alert variant="info" title="Antes de enviar">
+          La fecha de salida debe ser posterior a la de llegada.
+        </Alert>
+        <Alert variant="success" title="Solicitud enviada">
+          Te responderemos por correo en menos de 24 horas.
+        </Alert>
+        <Alert variant="danger" title="No pudimos enviar tu solicitud">
+          Inténtalo de nuevo o escríbenos por WhatsApp.
+        </Alert>
+      </div>
+    </div>
+  </Section>
+
+  <Section id="habitaciones" eyebrow="Componentes" title="Tarjetas de habitación">
+    <ul role="list" class="cards">
+      <li>
+        <RoomCard
+          href="#habitaciones"
+          name="Doble con vista al mar"
+          meta="4 adultos · 2 niños · por noche"
+          description="Dos camas matrimoniales y balcón."
+          cta="Ver habitación"
+          src={sample1.src}
+          width={sample1.width}
+          height={sample1.height}
+          alt="Ilustración de muestra: atardecer"
+        />
+      </li>
+      <li>
+        <RoomCard
+          href="#habitaciones"
+          name="Familiar"
+          meta="4 adultos · 2 niños · por noche"
+          description="Hasta seis personas, cerca de la playa."
+          cta="Ver habitación"
+          src={sample2.src}
+          width={sample2.width}
+          height={sample2.height}
+          alt="Ilustración de muestra: cabaña"
+        />
+      </li>
+      <li>
+        <RoomCard
+          href="#habitaciones"
+          name="Sencilla (sin foto disponible)"
+          meta="2 adultos · por noche"
+          cta="Ver habitación"
+        />
+      </li>
+    </ul>
+  </Section>
+
+  <WaveDivider color="var(--color-cream)" />
+  <Section id="galeria" tone="cream" eyebrow="Componentes" title="Galería y visor">
+    <p class="lead" style="margin-bottom: var(--space-6)">
+      Pulsa una foto: se abre el visor (teclado: flechas y Esc).
+    </p>
+    <Gallery locale="es" label="Galería de muestra" items={galleryItems} />
+  </Section>
+
+  <Section id="marca" eyebrow="Motivos" title="Arco y ola">
+    <div class="grid-2">
+      <Picture
+        src={samples[2]?.src}
+        width={samples[2]?.width}
+        height={samples[2]?.height}
+        alt="Ilustración de muestra: peces y olas"
+        ratio="arch"
+      />
+      <Picture alt="Imagen no disponible" ratio="arch" />
+    </div>
+    <p style="margin-top: var(--space-4); color: var(--color-text-muted)">
+      Izquierda: marco en arco (la silueta del logo). Derecha: estado cuando una imagen no existe en
+      el PMS: nunca se muestra una imagen rota.
+    </p>
+  </Section>
+</Base>
+
+<style>
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: var(--space-4);
+  }
+  .swatch__chip {
+    height: 4.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  .swatch__name {
+    margin-top: var(--space-2);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    overflow-wrap: anywhere;
+  }
+  .swatch__hex {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .swatch__note {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .contrast {
+    width: 100%;
+    margin-top: var(--space-3);
+    border-collapse: collapse;
+    font-size: var(--text-sm);
+  }
+  .contrast th,
+  .contrast td {
+    padding: var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .contrast__sample {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .panel-dark {
+    margin-top: var(--space-5);
+    padding: var(--space-5);
+    background: var(--color-deep);
+    border-radius: var(--radius-md);
+  }
+  .grid-2 {
+    display: grid;
+    gap: var(--space-5);
+  }
+  .form {
+    display: grid;
+    gap: var(--space-4);
+    align-content: start;
+  }
+  .cards {
+    display: grid;
+    gap: var(--space-5);
+  }
+  @media (min-width: 48rem) {
+    .grid-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

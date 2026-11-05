@@ -1,0 +1,40 @@
+---
+/** Barra fija inferior con la llamada a cotizar. Solo en móvil/tablet: en escritorio el CTA vive en la cabecera. */
+import type { Locale } from '../../clients/types.ts';
+import { t } from '../i18n/ui.ts';
+import { routeUrl } from '../lib/routes.ts';
+import Button from './Button.astro';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+---
+
+<div class="sticky-cta">
+  <Button href={routeUrl('quote', locale)} size="lg">
+    {t(locale, 'cta.quote.long')}
+  </Button>
+</div>
+
+<style>
+  .sticky-cta {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: var(--z-sticky-cta);
+    display: flex;
+    padding: var(--space-3) var(--gutter) calc(var(--space-3) + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--color-surface-raised) 96%, transparent);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -6px 18px rgb(58 29 18 / 0.08);
+  }
+  .sticky-cta :global(.btn) {
+    flex: 1;
+  }
+  @media (min-width: 64rem) {
+    .sticky-cta {
+      display: none;
+    }
+  }
+</style>

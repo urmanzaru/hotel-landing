@@ -12,6 +12,17 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
 - Los datos fiscales del hotel (RFC, razón social…) no deben llegar a `dist/` ni al snapshot.
 - Los enlaces internos se construyen con `import.meta.env.BASE_URL` (el staging va en una subcarpeta).
 
+## Sistema de diseño
+
+Guía completa en `docs/brand/design-system.md`; se ve en `http://localhost:4202/design/` (solo en desarrollo; para
+generarla en un build: `DESIGN_PAGE=1`, lo hacen las pruebas e2e). Reglas clave:
+
+- Solo tokens de `src/styles/tokens.css`: nada de colores ni medidas escritos a mano. El contraste lo vigila
+  `tests/unit/contrast.test.ts`.
+- Fotos con `Picture` (placeholder si la imagen no existe). Enlaces con `url()` / `routeUrl()`.
+- Todo componente nuevo se añade a `/design/` y pasa `npm run test:e2e` (axe WCAG 2.2 AA, sin desbordes, ≥ 44 px).
+- Una prueba nueva debe **fallar** sin el arreglo que cubre: comprobarlo antes de darla por buena.
+
 ## Skill `ui-ux-pro-max` (diseño)
 
 Instalada como skill de proyecto en `.claude/skills/ui-ux-pro-max/` (origen: `nextlevelbuilder/ui-ux-pro-max-skill`,

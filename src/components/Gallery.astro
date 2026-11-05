@@ -1,0 +1,232 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import { t } from '../i18n/ui.ts';
+import { fullUrl, withImage, type GalleryItem } from '../lib/gallery.ts';
+import Picture from './Picture.astro';
+
+interface Props {
+  locale: Locale;
+  /** Nombre accesible de la galería (también del visor). */
+  label: string;
+  items: GalleryItem[];
+}
+
+const { locale, label, items } = Astro.props;
+const visible = withImage(items);
+---
+
+{visible.length > 0 && (
+  <div class="gallery" data-gallery data-position={t(locale, 'gallery.position')}>
+    <ul role="list" class="gallery__grid" aria-label={label}>
+      {visible.map((item) => (
+        <li>
+          <a
+            class="gallery__item"
+            href={fullUrl(item)}
+            data-gallery-item
+            data-alt={item.alt}
+            data-caption={item.caption}
+            aria-label={`${t(locale, 'gallery.open')}: ${item.alt}`}
+          >
+            <Picture
+              asset={item.asset}
+              src={item.src}
+              width={item.width}
+              height={item.height}
+              alt=""
+              ratio="4 / 3"
+              sizes="(min-width: 64rem) 25vw, (min-width: 40rem) 33vw, 50vw"
+            />
+          </a>
+        </li>
+      ))}
+    </ul>
+
+    <dialog class="lightbox on-dark" aria-label={label}>
+      <div class="lightbox__inner" data-lightbox-inner>
+        <figure class="lightbox__figure">
+          <img data-lightbox-img alt="" />
+          <figcaption data-lightbox-caption hidden />
+        </figure>
+        <p class="lightbox__pos" data-lightbox-pos aria-live="polite" />
+        <button
+          type="button"
+          class="lightbox__btn lightbox__close"
+          data-lightbox-close
+          aria-label={t(locale, 'gallery.close')}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path
+              d="M6 6l12 12M18 6L6 18"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="lightbox__btn lightbox__prev"
+          data-lightbox-prev
+          aria-label={t(locale, 'gallery.prev')}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path
+              d="M15 5l-7 7 7 7"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="lightbox__btn lightbox__next"
+          data-lightbox-next
+          aria-label={t(locale, 'gallery.next')}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path
+              d="M9 5l7 7-7 7"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+            />
+          </svg>
+        </button>
+      </div>
+    </dialog>
+  </div>
+)}
+
+<script>
+  import '../islands/lightbox.ts';
+</script>
+
+<style>
+  .gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+  .gallery__item {
+    display: block;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: transform var(--duration-base) var(--ease-out);
+  }
+  .gallery__item:hover {
+    transform: scale(1.02);
+  }
+  .gallery__item :global(.pic) {
+    border-radius: var(--radius-md);
+  }
+
+  .lightbox {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: rgb(30 14 8 / 0.94);
+    color: var(--color-text-on-deep);
+    z-index: var(--z-dialog);
+  }
+  .lightbox::backdrop {
+    background: rgb(30 14 8 / 0.94);
+  }
+  .lightbox__inner {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    padding: var(--space-8) var(--space-4) var(--space-7);
+  }
+  .lightbox__figure {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: center;
+    margin: 0;
+    max-width: 100%;
+  }
+  .lightbox__figure img {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 12rem);
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+  }
+  .lightbox__figure figcaption {
+    text-align: center;
+    max-width: 60ch;
+  }
+  .lightbox__pos {
+    position: absolute;
+    bottom: var(--space-4);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: var(--text-sm);
+    color: var(--color-text-on-deep-muted);
+  }
+  .lightbox__btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    border: 2px solid var(--color-cream);
+    border-radius: var(--radius-pill);
+    background: rgb(58 29 18 / 0.7);
+    color: var(--color-cream);
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .lightbox__btn:hover {
+    background: var(--color-cream);
+    color: var(--color-brand);
+  }
+  .lightbox__close {
+    top: var(--space-4);
+    right: var(--space-4);
+  }
+  .lightbox__prev,
+  .lightbox__next {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .lightbox__prev {
+    left: var(--space-3);
+  }
+  .lightbox__next {
+    right: var(--space-3);
+  }
+
+  /* Bloquea el scroll del fondo mientras el visor está abierto. */
+  :global(html:has(dialog[open])) {
+    overflow: hidden;
+  }
+
+  @media (min-width: 40rem) {
+    .gallery__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  @media (min-width: 64rem) {
+    .gallery__grid {
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--space-4);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .gallery__item:hover {
+      transform: none;
+    }
+  }
+</style>

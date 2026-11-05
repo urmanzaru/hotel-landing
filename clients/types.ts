@@ -25,6 +25,11 @@ export interface ClientConfig {
   coordinates: { lat: number; lng: number };
   /** Contacto opcional que no viene del PMS. */
   contact: { whatsapp?: string };
+  /**
+   * Nombre base de los logos web en `public/brand/` (`<logoFile>-96.webp`, `-192.webp`, `-384.webp`).
+   * Si falta, la cabecera muestra solo el nombre del hotel.
+   */
+  logoFile?: string;
   /** Sobrescrituras de tokens CSS del sistema de diseño (playbook 03), p. ej. `{ '--color-brand': '#6B3220' }`. */
   theme: Record<`--${string}`, string>;
 }

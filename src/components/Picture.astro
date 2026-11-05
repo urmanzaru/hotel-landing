@@ -1,0 +1,114 @@
+---
+/**
+ * Imagen responsiva. Con un `asset` del snapshot genera <picture> (WebP + respaldo) con srcset; con `src` usa una
+ * <img> simple; sin ninguna de las dos (imagen que da 404 en el PMS) muestra un placeholder de marca, nunca una
+ * imagen rota.
+ */
+import type { ImageAsset } from '../data/types.ts';
+import { url } from '../lib/url.ts';
+
+interface Props {
+  asset?: ImageAsset | undefined;
+  /** Imagen suelta (sin variantes): requiere `width` y `height`. */
+  src?: string | undefined;
+  width?: number | undefined;
+  height?: number | undefined;
+  alt: string;
+  sizes?: string;
+  /** Proporción visual (CSS `aspect-ratio`), p. ej. `4 / 3`. `arch` = marco en arco del logo (3 / 4). */
+  ratio?: string | 'arch';
+  loading?: 'lazy' | 'eager';
+  /** Solo para la imagen principal (LCP). */
+  priority?: boolean;
+  class?: string;
+}
+
+const {
+  asset,
+  src,
+  width,
+  height,
+  alt,
+  sizes = '(min-width: 64rem) 33vw, 100vw',
+  ratio,
+  loading = 'lazy',
+  priority = false,
+  class: className,
+} = Astro.props;
+
+const isArch = ratio === 'arch';
+const aspect = isArch ? '3 / 4' : ratio;
+const webpSet = asset?.variants.map((v) => `${url(v.webp)} ${v.width}w`).join(', ');
+const fallbackSet = asset?.variants.map((v) => `${url(v.fallback)} ${v.width}w`).join(', ');
+const middle = asset ? asset.variants[Math.floor((asset.variants.length - 1) / 2)] : undefined;
+const imgAttrs = {
+  alt,
+  loading: priority ? 'eager' : loading,
+  fetchpriority: priority ? 'high' : undefined,
+  decoding: 'async',
+} as const;
+---
+
+<div
+  class:list={['pic', { 'pic--arch': isArch }, className]}
+  style={aspect ? `--ratio: ${aspect}` : undefined}
+>
+  {asset && middle ? (
+    <picture>
+      <source type="image/webp" srcset={webpSet} sizes={sizes} />
+      <img
+        src={url(middle.fallback)}
+        srcset={fallbackSet}
+        sizes={sizes}
+        width={asset.width}
+        height={asset.height}
+        {...imgAttrs}
+      />
+    </picture>
+  ) : src ? (
+    <img src={src} width={width} height={height} {...imgAttrs} />
+  ) : (
+    <svg class="pic__placeholder" viewBox="0 0 120 90" aria-hidden="true" focusable="false">
+      <rect width="120" height="90" fill="currentColor" opacity=".08" />
+      <path
+        d="M0 58 Q15 48 30 58 T60 58 T90 58 T120 58 M0 70 Q15 60 30 70 T60 70 T90 70 T120 70 M0 82 Q15 72 30 82 T60 82 T90 82 T120 82"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="3"
+        stroke-linecap="round"
+        opacity=".35"
+      />
+      <circle cx="86" cy="30" r="10" fill="currentColor" opacity=".25" />
+    </svg>
+  )}
+</div>
+
+<style>
+  .pic {
+    position: relative;
+    overflow: hidden;
+    background: var(--color-surface-sunken);
+    color: var(--color-brand);
+    aspect-ratio: var(--ratio, auto);
+  }
+  .pic--arch {
+    border-radius: var(--radius-arch);
+  }
+  .pic :global(img),
+  .pic :global(picture) {
+    width: 100%;
+  }
+  .pic[style*='--ratio'] :global(img),
+  .pic[style*='--ratio'] :global(picture),
+  .pic__placeholder {
+    height: 100%;
+  }
+  .pic[style*='--ratio'] :global(img) {
+    object-fit: cover;
+  }
+  .pic__placeholder {
+    width: 100%;
+    object-fit: cover;
+    min-height: 6rem;
+  }
+</style>

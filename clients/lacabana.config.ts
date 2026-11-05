@@ -14,6 +14,7 @@ export default defineClient({
   // Aproximado: centro de Puerto Ángel, Oaxaca. Reemplazar por la ubicación exacta del hotel.
   coordinates: { lat: 15.6694, lng: -96.4906 },
   contact: {},
+  logoFile: 'logo-lacabana',
   // Los tokens de marca se definen en el playbook 03.
   theme: {},
 });

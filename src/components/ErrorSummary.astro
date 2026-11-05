@@ -1,0 +1,65 @@
+---
+/**
+ * Resumen de errores de un formulario. Tras un envío fallido, el script del formulario debe enfocar este bloque
+ * (`tabindex="-1"`) para que teclado y lectores de pantalla lo encuentren; cada elemento enlaza a su campo.
+ */
+interface Props {
+  title: string;
+  errors: { id: string; message: string }[];
+  /** `id` del contenedor, para enfocarlo desde el script. */
+  id?: string;
+}
+const { title, errors, id = 'error-summary' } = Astro.props;
+const hasErrors = errors.length > 0;
+---
+
+<div
+  id={id}
+  class="summary"
+  role="alert"
+  tabindex="-1"
+  aria-labelledby={`${id}-title`}
+  hidden={!hasErrors}
+>
+  <h2 id={`${id}-title`} class="summary__title">
+    {title}
+  </h2>
+  <ul role="list">
+    {errors.map((error) => (
+      <li>
+        <a href={`#${error.id}`}>{error.message}</a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .summary {
+    padding: var(--space-4) var(--space-5);
+    border: 2px solid var(--color-danger);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+  }
+  .summary[hidden] {
+    display: none;
+  }
+  .summary__title {
+    margin-bottom: var(--space-2);
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    color: var(--color-danger);
+  }
+  .summary ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .summary a {
+    color: var(--color-danger);
+    font-weight: 700;
+  }
+  .summary:focus-visible {
+    outline: 3px solid var(--color-danger);
+    outline-offset: 3px;
+  }
+</style>

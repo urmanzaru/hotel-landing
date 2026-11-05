@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Ilustración de muestra: cabaña frente al mar">
+  <rect width="1200" height="800" fill="#ffe6b1"/>
+  <rect y="520" width="1200" height="280" fill="#e8cfa0"/>
+  <path d="M0 520 Q300 490 600 520 T1200 520 V560 H0Z" fill="#1f5c66"/>
+  <polygon points="360,420 600,250 840,420" fill="#633222"/>
+  <rect x="400" y="420" width="400" height="190" fill="#a8512f"/>
+  <rect x="560" y="480" width="80" height="130" fill="#4a2418"/>
+  <rect x="440" y="460" width="70" height="70" fill="#ffe6b1"/>
+  <rect x="690" y="460" width="70" height="70" fill="#ffe6b1"/>
+</svg>

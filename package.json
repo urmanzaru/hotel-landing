@@ -20,16 +20,20 @@
     "data:fetch": "node --env-file-if-exists=.env --import tsx scripts/fetch-snapshot.ts",
     "verify": "npm run check && npm run lint && npm run test && npm run build",
     "api:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-api-contract.ts",
-    "images:check": "node --import tsx scripts/check-images.ts"
+    "images:check": "node --import tsx scripts/check-images.ts",
+    "brand:assets": "node --import tsx scripts/make-brand-assets.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",
+    "@fontsource-variable/fraunces": "5.3.0",
+    "@fontsource-variable/karla": "5.3.0",
     "astro": "7.4.5",
     "sharp": "0.35.5",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
+    "@axe-core/playwright": "4.14.0",
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
     "eslint": "10.14.0",

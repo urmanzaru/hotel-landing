@@ -1,0 +1,175 @@
+---
+/**
+ * Campo de formulario accesible: etiqueta SIEMPRE visible (nunca solo placeholder), ayuda y error asociados con
+ * `aria-describedby`, `aria-invalid` cuando hay error y teclado móvil adecuado (`inputmode`, `autocomplete`).
+ */
+interface Props {
+  id: string;
+  name?: string;
+  label: string;
+  type?: 'text' | 'email' | 'tel' | 'date' | 'number' | 'textarea' | 'select';
+  required?: boolean;
+  /** Texto que acompaña a las etiquetas obligatorias, p. ej. «obligatorio». */
+  requiredLabel?: string;
+  hint?: string | undefined;
+  error?: string | undefined;
+  autocomplete?: string;
+  inputmode?: 'text' | 'numeric' | 'tel' | 'email' | 'decimal';
+  value?: string | number;
+  min?: string | number;
+  max?: string | number;
+  maxlength?: number;
+  rows?: number;
+  options?: { value: string; label: string }[];
+}
+
+const {
+  id,
+  name = id,
+  label,
+  type = 'text',
+  required = false,
+  requiredLabel = 'obligatorio',
+  hint,
+  error,
+  autocomplete,
+  inputmode,
+  value,
+  min,
+  max,
+  maxlength,
+  rows = 4,
+  options = [],
+} = Astro.props;
+
+const hintId = hint ? `${id}-hint` : undefined;
+const errorId = error ? `${id}-error` : undefined;
+const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+const common = {
+  id,
+  name,
+  required: required || undefined,
+  autocomplete,
+  'aria-describedby': describedBy,
+  'aria-invalid': error ? 'true' : undefined,
+} as const;
+---
+
+<div class:list={['field', { 'field--error': Boolean(error) }]}>
+  <label for={id} class="field__label">
+    {label}
+    {required && <span class="field__req">({requiredLabel})</span>}
+  </label>
+  {hint && (
+    <p id={hintId} class="field__hint">
+      {hint}
+    </p>
+  )}
+  {type === 'textarea' ? (
+    <textarea class="control" rows={rows} maxlength={maxlength} {...common}>
+        {value}
+      </textarea>
+  ) : type === 'select' ? (
+    <select class="control control--select" {...common}>
+      {options.map((option) => (
+        <option value={option.value} selected={String(value ?? '') === option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ) : (
+    <input
+      class="control"
+      type={type}
+      inputmode={inputmode}
+      value={value}
+      min={min}
+      max={max}
+      maxlength={maxlength}
+      {...common}
+    />
+  )}
+  {error && (
+    <p id={errorId} class="field__error">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+        <path
+          d="M12 7v6m0 4h.01"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+        />
+        <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2" />
+      </svg>
+      {error}
+    </p>
+  )}
+</div>
+
+<style>
+  .field {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .field__label {
+    font-weight: 700;
+    color: var(--color-text);
+  }
+  .field__req {
+    margin-inline-start: var(--space-1);
+    font-weight: 400;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .field__hint {
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .control {
+    width: 100%;
+    min-height: var(--tap-size);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface-raised);
+    border: 2px solid var(--color-border-strong);
+    border-radius: var(--radius-md);
+    font-size: 1rem; /* ≥ 16 px: evita el zoom automático de iOS al enfocar */
+    transition:
+      border-color var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+  .control:hover {
+    border-color: var(--color-brand);
+  }
+  .control:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+    border-color: var(--color-brand);
+  }
+  textarea.control {
+    resize: vertical;
+    min-height: 7rem;
+  }
+  .control--select {
+    appearance: none;
+    padding-right: var(--space-7);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23633222' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right var(--space-3) center;
+    background-size: 1.25rem;
+  }
+  .field--error .control {
+    border-color: var(--color-danger);
+    background: var(--color-danger-soft);
+  }
+  .field__error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--color-danger);
+  }
+  .field__error svg {
+    flex: none;
+  }
+</style>

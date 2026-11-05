@@ -1,0 +1,144 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import { t } from '../i18n/ui.ts';
+import { NAV_ROUTES, routeUrl } from '../lib/routes.ts';
+import { url } from '../lib/url.ts';
+import { siteConfig } from '../lib/site.ts';
+
+interface Props {
+  locale: Locale;
+  hotelName: string;
+  address?: string | undefined;
+  phones?: string[] | undefined;
+  email?: string | undefined;
+  /** Mostrar el enlace a políticas solo si el hotel tiene alguna. */
+  hasPolicies?: boolean | undefined;
+}
+
+const { locale, hotelName, address, phones = [], email, hasPolicies = true } = Astro.props;
+const logoBase = siteConfig.logoFile;
+const year = new Date().getFullYear();
+const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
+---
+
+<footer class="footer on-dark">
+  <div class="container footer__grid">
+    <div class="footer__brand">
+      {logoBase && (
+        <img
+          src={url(`brand/${logoBase}-192.webp`)}
+          srcset={`${url(`brand/${logoBase}-192.webp`)} 192w, ${url(`brand/${logoBase}-384.webp`)} 384w`}
+          sizes="6rem"
+          width="74"
+          height="100"
+          alt=""
+          loading="lazy"
+        />
+      )}
+      <p class="footer__name">{hotelName}</p>
+      {address && <p class="footer__muted">{address}</p>}
+    </div>
+
+    <nav aria-label={t(locale, 'footer.explore')}>
+      <h2 class="footer__title">{t(locale, 'footer.explore')}</h2>
+      <ul role="list">
+        {NAV_ROUTES.map((key) => (
+          <li>
+            <a href={routeUrl(key, locale)}>{t(locale, `nav.${key}` as 'nav.home')}</a>
+          </li>
+        ))}
+        {hasPolicies && (
+          <li>
+            <a href={routeUrl('policies', locale)}>{t(locale, 'footer.policies')}</a>
+          </li>
+        )}
+      </ul>
+    </nav>
+
+    <div>
+      <h2 class="footer__title">{t(locale, 'footer.contact')}</h2>
+      <ul role="list">
+        {phones.map((phone) => (
+          <li>
+            <a href={telHref(phone)}>{phone}</a>
+          </li>
+        ))}
+        {email && (
+          <li>
+            <a href={`mailto:${email}`}>{email}</a>
+          </li>
+        )}
+      </ul>
+    </div>
+  </div>
+
+  <div class="container footer__legal">
+    <p>
+      © {year} {hotelName}. {t(locale, 'footer.rights')}.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--color-deep);
+    color: var(--color-text-on-deep);
+    padding-block: var(--space-8) var(--space-5);
+  }
+  .footer__grid {
+    display: grid;
+    gap: var(--space-7);
+  }
+  .footer__brand img {
+    height: 6.25rem;
+    width: auto;
+    margin-bottom: var(--space-3);
+  }
+  .footer__name {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    line-height: var(--leading-snug);
+    color: var(--color-text-on-deep);
+  }
+  .footer__muted {
+    margin-top: var(--space-2);
+    color: var(--color-text-on-deep-muted);
+    max-width: 30ch;
+  }
+  .footer__title {
+    margin-bottom: var(--space-3);
+    font-family: var(--font-body);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-on-deep-muted);
+  }
+  .footer ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    color: var(--color-text-on-deep);
+  }
+  .footer a:hover {
+    color: var(--color-surface);
+  }
+  .footer__legal {
+    margin-top: var(--space-7);
+    padding-top: var(--space-5);
+    border-top: 1px solid color-mix(in srgb, var(--color-cream) 25%, transparent);
+    font-size: var(--text-sm);
+    color: var(--color-text-on-deep-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .footer__grid {
+      grid-template-columns: 1.4fr 1fr 1fr;
+    }
+  }
+</style>

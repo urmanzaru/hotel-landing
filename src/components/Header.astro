@@ -1,0 +1,261 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import { t } from '../i18n/ui.ts';
+import { NAV_ROUTES, otherLocale, routeUrl, type RouteKey } from '../lib/routes.ts';
+import { url } from '../lib/url.ts';
+import { siteConfig } from '../lib/site.ts';
+import Button from './Button.astro';
+
+interface Props {
+  locale: Locale;
+  hotelName: string;
+  /** Ruta actual (para `aria-current` y para el enlace al otro idioma). */
+  current?: RouteKey | undefined;
+}
+
+const { locale, hotelName, current } = Astro.props;
+const other = otherLocale(locale);
+const switchHref = routeUrl(current ?? 'home', other);
+const logoBase = siteConfig.logoFile;
+const logoSrcset = logoBase
+  ? [96, 192, 384].map((w) => `${url(`brand/${logoBase}-${w}.webp`)} ${w}w`).join(', ')
+  : undefined;
+const items = NAV_ROUTES.map((key) => ({
+  key,
+  href: routeUrl(key, locale),
+  label: t(locale, `nav.${key}` as 'nav.home'),
+  active: key === current,
+}));
+---
+
+<header class="header">
+  <div class="container header__bar">
+    <a class="brand" href={routeUrl('home', locale)}>
+      {logoSrcset && logoBase && (
+        <img
+          class="brand__logo"
+          src={url(`brand/${logoBase}-96.webp`)}
+          srcset={logoSrcset}
+          sizes="3rem"
+          width="38"
+          height="52"
+          alt=""
+        />
+      )}
+      <span class="brand__name">{hotelName}</span>
+    </a>
+
+    <nav class="nav nav--desktop" aria-label={t(locale, 'nav.main')}>
+      <ul role="list">
+        {items.map((item) => (
+          <li>
+            <a href={item.href} aria-current={item.active ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a class="lang" href={switchHref} lang={other} hreflang={other}>
+        <span aria-hidden="true">{other.toUpperCase()}</span>
+        <span class="visually-hidden">
+          {t(locale, 'lang.switch')}: {t(locale, `lang.${other}`)}
+        </span>
+      </a>
+      <Button href={routeUrl('quote', locale)} class="header__cta">
+        {t(locale, 'cta.quote')}
+      </Button>
+
+      <details class="menu">
+        <summary>
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              fill="none"
+            />
+          </svg>
+          <span>{t(locale, 'nav.menu')}</span>
+        </summary>
+        <nav class="menu__panel" aria-label={t(locale, 'nav.main')}>
+          <ul role="list">
+            {items.map((item) => (
+              <li>
+                <a href={item.href} aria-current={item.active ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    background: color-mix(in srgb, var(--color-surface-raised) 94%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .header__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: 4rem;
+    padding-block: var(--space-2);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--tap-size);
+    text-decoration: none;
+    color: var(--color-brand);
+  }
+  .brand__logo {
+    width: auto;
+    height: 3rem;
+  }
+  .brand__name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  .nav--desktop {
+    display: none;
+  }
+  .nav ul {
+    display: flex;
+    gap: var(--space-1);
+  }
+  .nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    padding-inline: var(--space-3);
+    border-radius: var(--radius-pill);
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .nav a:hover {
+    background: var(--color-surface-sunken);
+  }
+  .nav a[aria-current='page'] {
+    color: var(--color-brand);
+    background: var(--color-cream);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .header__cta {
+    display: none;
+  }
+  .lang {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--tap-size);
+    min-height: var(--tap-size);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+  }
+  .lang:hover {
+    background: var(--color-surface-sunken);
+  }
+
+  /* Menú móvil: <details>, funciona sin JavaScript */
+  .menu {
+    position: relative;
+  }
+  .menu summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--tap-size);
+    padding-inline: var(--space-3);
+    border: 2px solid var(--color-brand);
+    border-radius: var(--radius-pill);
+    color: var(--color-brand);
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+  }
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+  .menu[open] summary {
+    background: var(--color-brand);
+    color: var(--color-text-on-brand);
+  }
+  .menu__panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--space-2));
+    width: min(20rem, calc(100vw - 2 * var(--gutter)));
+    padding: var(--space-3);
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+  }
+  .menu__panel ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .menu__panel a {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    padding-inline: var(--space-4);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .menu__panel a:hover {
+    background: var(--color-surface-sunken);
+  }
+  .menu__panel a[aria-current='page'] {
+    background: var(--color-cream);
+    color: var(--color-brand);
+  }
+
+  @media (min-width: 40rem) {
+    .brand__name {
+      font-size: var(--text-lg);
+      max-width: 16ch;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .nav--desktop {
+      display: block;
+    }
+    .header__cta {
+      display: inline-flex;
+    }
+    .menu {
+      display: none;
+    }
+  }
+</style>
