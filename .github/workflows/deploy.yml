@@ -1,0 +1,151 @@
+# Publicación por FTP (playbook 07). Ver docs/runbooks/cutover.md.
+#
+# Destino:
+# - push a main              → staging
+# - programado (cada 6 h)    → vars.SCHEDULED_TARGET (staging hasta el cutover; luego production)
+# - manual                   → el que se elija (production pide aprobación: Environment protegido)
+# Redespliegue (rollback rápido): manual con `redeploy_run_id` = id de una ejecución anterior: sube su dist/ tal cual.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Destino
+        type: choice
+        options: [staging, production]
+        default: staging
+      dry_run:
+        description: Simular la subida (no cambia nada en el servidor)
+        type: boolean
+        default: false
+      redeploy_run_id:
+        description: Id de una ejecución anterior para volver a subir su dist/ (rollback); vacío = construir
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  actions: read # descargar el dist/ de una ejecución anterior (rollback)
+
+jobs:
+  deploy:
+    name: Publicar en ${{ inputs.target || (github.event_name == 'schedule' && vars.SCHEDULED_TARGET) || 'staging' }}
+    # Los despliegues automáticos (push y programados) esperan a que el repositorio tenga la variable
+    # DEPLOY_ENABLED=true (cuando ya existen los Environments con secretos). El manual funciona siempre.
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.target || (github.event_name == 'schedule' && vars.SCHEDULED_TARGET) || 'staging' }}
+      url: ${{ vars.SITE_URL }}
+    concurrency:
+      # Una publicación a la vez por destino, sin cancelar una subida a medias.
+      group: deploy-${{ inputs.target || (github.event_name == 'schedule' && vars.SCHEDULED_TARGET) || 'staging' }}
+      cancel-in-progress: false
+    env:
+      CLIENT: ${{ vars.CLIENT }}
+      SITE_ORIGIN: ${{ vars.SITE_ORIGIN }}
+      PUBLIC_API_URL: ${{ vars.PUBLIC_API_URL }}
+      HOTEL_ID: ${{ vars.HOTEL_ID }}
+      BASE_PATH: ${{ vars.BASE_PATH }}
+      NOINDEX: ${{ vars.NOINDEX }}
+      REDEPLOY_RUN_ID: ${{ inputs.redeploy_run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # --- Construir (camino normal) -------------------------------------------------------------------------
+      - name: Caché del último snapshot bueno y de las imágenes originales
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache
+          key: pms-${{ vars.CLIENT }}-${{ github.run_id }}
+          restore-keys: pms-${{ vars.CLIENT }}-
+
+      - name: Datos del PMS (falla si la API cae y no hay caché)
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        run: npm run data:fetch
+
+      - name: Nunca publicar datos de muestra
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        run: npm run data:assert-live
+
+      - name: Build (+ .htaccess)
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        run: npm run build
+
+      - name: Imágenes referenciadas existen
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        run: npm run images:check
+
+      # --- Redesplegar un dist/ anterior (rollback) ----------------------------------------------------------
+      - name: Descargar dist/ de la ejecución ${{ env.REDEPLOY_RUN_ID }}
+        if: ${{ env.REDEPLOY_RUN_ID != '' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist-${{ inputs.target }}
+          path: dist
+          run-id: ${{ env.REDEPLOY_RUN_ID }}
+          github-token: ${{ github.token }}
+
+      - name: Snapshot del dist/ redesplegado (para las comprobaciones)
+        if: ${{ env.REDEPLOY_RUN_ID != '' }}
+        run: cp dist/_snapshot.json src/data/snapshot.json
+
+      # --- Comprobar y subir ---------------------------------------------------------------------------------
+      - name: Humo previo a la subida
+        run: npm run deploy:check
+
+      - name: Guardar el snapshot con el dist/ (permite redesplegarlo)
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        run: cp src/data/snapshot.json dist/_snapshot.json
+
+      - name: Guardar dist/ (14 días, para rollback)
+        if: ${{ env.REDEPLOY_RUN_ID == '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ inputs.target || (github.event_name == 'schedule' && vars.SCHEDULED_TARGET) || 'staging' }}
+          path: dist/
+          include-hidden-files: true # el .htaccess
+          retention-days: 14
+
+      - name: No subir el snapshot al servidor
+        run: rm -f dist/_snapshot.json
+
+      - name: Subir por FTP
+        uses: SamKirkland/FTP-Deploy-Action@110f9186c050f71550953127052e77650219c287 # v4.4.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./dist/
+          server-dir: ${{ vars.FTP_DIR }}
+          # Estado propio por destino: solo sube lo que cambió y solo borra lo que subió él mismo
+          # (.well-known/, cgi-bin/ y el sitio anterior nunca están en su estado). SIN dangerous-clean-slate.
+          state-name: .ftp-deploy-sync-state-${{ inputs.target || (github.event_name == 'schedule' && vars.SCHEDULED_TARGET) || 'staging' }}.json
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .well-known/**
+            cgi-bin/**
+          dry-run: ${{ inputs.dry_run || false }}
+          log-level: standard
+
+      - name: Verificar el sitio publicado
+        if: ${{ !inputs.dry_run }}
+        run: npm run deploy:verify -- "${{ vars.SITE_URL }}"

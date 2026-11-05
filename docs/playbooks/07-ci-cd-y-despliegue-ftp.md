@@ -1,5 +1,10 @@
 # 07 — CI/CD y despliegue por FTP
 
+> **Estado: 🟡 todo el código está hecho y probado aquí (workflows validados con `actionlint`, `.htaccess` probado en
+> Apache 2.4 real). Falta lo que solo puede hacerse con acceso al hosting y a GitHub: crear los Environments y
+> secretos, el despliegue de prueba (preguntas abiertas 2 y 3), el staging y el cutover.** Pasos exactos en
+> [`docs/runbooks/cutover.md`](../runbooks/cutover.md).
+
 **Objetivo:** que cada cambio y cada reconstrucción programada se verifique, se construya y se publique por FTP de
 forma repetible, con staging, respaldo y rollback. El servidor no se configura: solo recibe archivos.
 
@@ -14,19 +19,33 @@ Raíz del sitio: `.well-known/`, `assets/`, `cgi-bin/`, `.htaccess` (201 bytes),
 Hay que **conservar** `.well-known/` (validación SSL) y `cgi-bin/`, y **leer el `.htaccess` actual** antes de
 reemplazarlo (puede traer redirecciones o reglas del hosting que hay que mantener).
 
-## Entregables
+## Entregables (hechos)
 
-- `.github/workflows/ci.yml`, `deploy.yml`, `.github/dependabot.yml`.
-- `public/.htaccess` del sitio nuevo y `docs/runbooks/cutover.md` (resumen operativo de este playbook).
+| Archivo | Qué hace |
+| --- | --- |
+| `.github/workflows/ci.yml` | En cada push y PR: tipos, lint, formato, unitarias, build, e2e, `.htaccess` en Apache real y Lighthouse. Guarda informes. |
+| `.github/workflows/deploy.yml` | Datos del PMS → build → humo → artefacto `dist/` → FTP → verificación. Destino, simulación y redespliegue (rollback). |
+| `.github/dependabot.yml` | npm y acciones, semanal, agrupado y con 14 días de espera para versiones nuevas. |
+| `src/lib/htaccess.ts` + `scripts/write-htaccess.ts` | El `.htaccess` se **genera** en `postbuild` (no es un archivo fijo en `public/`): depende del origen, la base, la API, los hashes CSP de los scripts del build y el modo staging. |
+| `src/lib/deploy-checks.ts` + `scripts/check-dist.ts`, `verify-deploy.ts` | `npm run deploy:check` (antes de subir) y `npm run deploy:verify -- <url>` (después). |
+| `tests/integration/apache.test.ts` | `npm run test:apache`: sirve tres builds con Apache real y comprueba reglas, cabeceras y la CSP en Chromium. |
+| `docs/runbooks/cutover.md` | Configuración, despliegue de prueba, staging, cutover, rollback y plan B. |
+
+Todas las acciones están fijadas por SHA (con su versión en un comentario), en versiones de más de dos semanas.
 
 ## Pipeline
 
 ### `ci.yml` — en cada PR y push
-`npm ci` → `check` → `lint` → `test` → `build` (con fixtures, sin API real) → `test:e2e` → `npm run lhci`
-(configurado en `lighthouserc.cjs`; guarda los informes en `.lighthouseci/` → subirlos como artefacto).
+`npm ci` → `check` → `lint` → `format:check` → `test` → `build` (con datos de muestra, sin API real) →
+`images:check` → `test:e2e` → `test:apache` (instala `apache2`) → `lhci`. Los informes de Playwright y Lighthouse
+se guardan como artefacto.
 
-### `deploy.yml` — `push` a `main`, `schedule` (`0 */6 * * *`), `workflow_dispatch` (con parámetro `target`:
-`staging` | `production`)
+### `deploy.yml` — `push` a `main`, `schedule` (`17 */6 * * *`), `workflow_dispatch` (`target`, `dry_run`, `redeploy_run_id`)
+
+Destino: push → `staging`; programado → `vars.SCHEDULED_TARGET` (staging hasta el cutover); manual → el elegido.
+Push y programado solo corren con la variable de repositorio `DEPLOY_ENABLED=true` (evita fallos cada 6 h antes de
+configurar los secretos). Con `redeploy_run_id` se salta la construcción y se sube el `dist/` guardado de esa
+ejecución (rollback rápido). Lo que sigue es el camino normal:
 
 1. `concurrency: deploy-${{ inputs.target }}` (una sola ejecución a la vez, sin cancelar a medias).
 2. Checkout, Node 22 con caché de npm, `npm ci`.
@@ -35,13 +54,15 @@ reemplazarlo (puede traer redirecciones o reglas del hosting que hay que mantene
    Justo después, **`npm run data:assert-live`**: falla si el snapshot es de MUESTRA (`dataSource: fixture`), para que
    datos de ejemplo nunca lleguen a producción.
 5. `npm run build` + `check-images.ts`.
-6. **Humo previo al envío**: existen `dist/index.html`, `dist/habitaciones/index.html`, `dist/.htaccess`; el
-   HTML contiene el nombre del hotel.
+6. **Humo previo al envío** (`npm run deploy:check`): existen portada, habitaciones, cotización, 404, `_astro/` y
+   `.htaccess`; la portada tiene el nombre del hotel; **`noindex` solo en staging** (en producción, si la portada lo
+   lleva, no se sube) y el `.htaccess` coincide con ese modo.
 7. Subir por FTP con `SamKirkland/FTP-Deploy-Action` (versión fija): `local-dir: dist/`, `server-dir` del
    entorno, `protocol: ftps` si el hosting lo permite, `state-name` propio por entorno (sube solo lo que cambió),
    `exclude: **/.well-known/**, **/cgi-bin/**`, **sin** `dangerous-clean-slate`.
-8. **Verificación posterior**: `curl -fsS https://<dominio>/` devuelve 200 y contiene el nombre del hotel; la
-   ruta de una imagen optimizada responde 200. Si falla → el job falla y avisa (ver rollback).
+8. **Verificación posterior** (`npm run deploy:verify -- $SITE_URL`, 3 intentos): la portada responde 200 con el
+   nombre del hotel, una imagen del PMS responde 200 y el `.htaccess` no se puede descargar (errores); avisa si el
+   hosting no aplica la CSP, la caché o la redirección de `/roomTypes`. Si falla → el job falla (ver rollback).
 9. Guardar `dist/` como artefacto del job (retención 14 días) para poder redistribuir una versión anterior.
 
 ### Secretos y variables
@@ -52,20 +73,29 @@ reemplazarlo (puede traer redirecciones o reglas del hosting que hay que mantene
 | `FTP_PROTOCOL` | Variable | `ftps` o `ftp` |
 | `FTP_DIR` | Variable | `/public_html/` o carpeta del subdominio de pruebas |
 | `PUBLIC_API_URL`, `HOTEL_ID`, `SITE_ORIGIN`, `CLIENT` | Variable | por entorno |
+| `BASE_PATH`, `NOINDEX`, `SITE_URL` | Variable | staging: `/nuevo/`, `1`, `https://<dominio>/nuevo/` |
+| `DEPLOY_ENABLED`, `SCHEDULED_TARGET` | Variable del repositorio | `true`; `staging` → `production` tras el cutover |
 
 Usar **Environments** de GitHub; `production` con aprobación manual requerida.
 
-## `.htaccess` del sitio nuevo (todo dentro de `<IfModule>` para no romper si falta un módulo)
+## `.htaccess` del sitio nuevo (todo dentro de `<IfModule>` para no romper si falta un módulo) — ✅ generado y probado
 
-- Forzar HTTPS y un solo host canónico (con o sin `www`).
+- Forzar HTTPS y un solo host canónico (el de `SITE_ORIGIN`), **excepto `.well-known/`** (validación del certificado
+  por http). Solo si `SITE_ORIGIN` es `https:`.
 - `Options -Indexes`; `DirectoryIndex index.html`; `ErrorDocument 404 /404.html`.
-- Compresión (`mod_deflate`) y caché: `/_astro/*` y `/images/*` → `max-age=31536000, immutable`;
-  HTML → `no-cache` (revalidar siempre).
+- Compresión (`mod_deflate`) y caché: `_astro/` → un año `immutable` (nombres con hash); `img/` → una semana (las
+  fotos del PMS conservan el id aunque cambien); el resto → un día; HTML → `no-cache` (revalidar siempre). Lo de las
+  carpetas va en un `.htaccess` propio dentro de cada una.
 - Cabeceras de seguridad: `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`,
-  `Content-Security-Policy` ajustada (`connect-src` = `PUBLIC_API_URL`; `img-src 'self' data:`).
+  `X-Frame-Options`, `Content-Security-Policy` (`connect-src` = `PUBLIC_API_URL`; `img-src 'self' data:`; scripts en
+  línea autorizados **por hash**, calculados del build; `style-src` necesita `'unsafe-inline'` por los atributos
+  `style` de Astro; Turnstile se añade solo si el cliente lo activa).
 - Redirecciones 301 del sitio Angular anterior: generarlas con `htaccessRedirects(base)` de `src/lib/legacy.ts`
   (lista y supuestos en 06).
-- Conservar cualquier regla propia del hosting detectada en el `.htaccess` actual.
+- Conservar cualquier regla propia del hosting detectada en el `.htaccess` actual: copiarla a
+  `clients/<cliente>.htaccess`, que se antepone al generado.
+- Hallazgo de la prueba en Apache: el `.htaccess` de la **raíz** también se aplica a `/nuevo/`. Con el nuestro no hay
+  problema (staging y producción comparten dominio); con el de Angular, ver el aviso en el runbook.
 
 ## Plan de despliegue por fases
 
@@ -74,11 +104,11 @@ Usar **Environments** de GitHub; `production` con aprobación manual requerida.
 > es, por tanto, una **subcarpeta** del mismo dominio (p. ej. `https://<dominio>/nuevo/`), que convive con el
 > Angular actual en la raíz sin pisarlo.
 
-- [ ] Soportar `BASE_PATH` en `astro.config.ts` (`base: '/nuevo/'` solo en staging; en producción `/`). Todos los
+- [x] Soportar `BASE_PATH` en `astro.config.ts` (`base: '/nuevo/'` solo en staging; en producción `/`). Todos los
       enlaces y recursos internos se construyen con `import.meta.env.BASE_URL` (regla en 04), nunca con rutas
       absolutas escritas a mano. El workflow compila con `BASE_PATH=/nuevo/` para `staging`.
-- [ ] El staging **no se indexa**: `<meta name="robots" content="noindex">` y `X-Robots-Tag: noindex` en el
-      `.htaccess` de esa carpeta; `robots.txt` y sitemap solo en producción.
+- [x] El staging **no se indexa**: con `NOINDEX=1`, `<meta name="robots" content="noindex">` en cada página,
+      `X-Robots-Tag: noindex` en el `.htaccess` de esa carpeta, `robots.txt` que bloquea y sitemap vacío.
 - [ ] El `Origin` del navegador es el dominio, **sin ruta**: es el mismo que tendrá producción. Si ese dominio
       está registrado como `url` del hotel en el PMS correspondiente, el formulario funciona en staging; si no,
       dará 403 (la API de dev solo conoce `http://localhost:4202`). Hasta entonces, en staging se valida todo
@@ -107,7 +137,8 @@ Usar **Environments** de GitHub; `production` con aprobación manual requerida.
 
 ## Criterios de aceptación
 
-- Un PR con un error de lint o un test roto **no** puede desplegarse.
+- Un PR con un error de lint o un test roto **no** puede desplegarse: solo `main` despliega y hay que activar la
+  protección de rama (*Settings → Branches*: requerir el check «CI» verde antes de fusionar).
 - `workflow_dispatch` a `staging` publica en menos de 5 minutos y el job termina verde con la verificación posterior.
 - Con `PUBLIC_API_URL` apuntando a un host caído y sin caché, el job falla y **el sitio publicado no cambia**.
 - Se ejecutó un ensayo de rollback en staging y funciona.

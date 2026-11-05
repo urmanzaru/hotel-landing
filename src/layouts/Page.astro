@@ -8,6 +8,7 @@ import { getSnapshot } from '../data/load.ts';
 import { routeUrl, type RouteKey } from '../lib/routes.ts';
 import { layoutHotel, pageTitle, pick, truncate } from '../lib/content.ts';
 import { OG_IMAGE, ogImagePath } from '../lib/og.ts';
+import { siteConfig } from '../lib/site.ts';
 import Base from './Base.astro';
 
 interface Props {
@@ -53,7 +54,7 @@ const hotelName = pick(snapshot.hotel.name, locale);
   paths={pagePaths}
   image={{ path: ogImagePath(ogImage), ...OG_IMAGE, alt: label ?? hotelName }}
   hotel={layoutHotel(snapshot, locale)}
-  noindex={noindex || snapshot.dataSource === 'fixture'}
+  noindex={noindex || snapshot.dataSource === 'fixture' || siteConfig.noindex}
   hideStickyCta={hideStickyCta}
 >
   <slot />

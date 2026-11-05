@@ -11,7 +11,8 @@ import { siteConfig } from '../lib/site.ts';
 export const GET: APIRoute = () => {
   const snapshot = getSnapshot();
   const { origin, defaultLocale, locales } = siteConfig;
-  const pages = snapshot.dataSource === 'fixture' ? [] : indexablePages(snapshot);
+  const hidden = snapshot.dataSource === 'fixture' || siteConfig.noindex;
+  const pages = hidden ? [] : indexablePages(snapshot);
   const entries = pages.flatMap((paths) =>
     locales.map((locale) => ({
       loc: absoluteUrl(origin, paths[locale]),

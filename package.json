@@ -10,12 +10,14 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "node --import tsx scripts/write-htaccess.ts",
     "preview": "astro preview",
     "check": "astro check",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:apache": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "data:fetch": "node --env-file-if-exists=.env --import tsx scripts/fetch-snapshot.ts",
     "verify": "npm run check && npm run lint && npm run test && npm run build",
@@ -26,7 +28,9 @@
     "prebuild": "node --import tsx scripts/ensure-snapshot.ts",
     "data:fixture": "node --import tsx scripts/fixture-snapshot.ts",
     "data:assert-live": "node --import tsx scripts/assert-live-data.ts",
-    "lhci": "npm run build && lhci autorun"
+    "lhci": "npm run build && lhci autorun",
+    "deploy:check": "node --import tsx scripts/check-dist.ts",
+    "deploy:verify": "node --import tsx scripts/verify-deploy.ts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "5.3.0",

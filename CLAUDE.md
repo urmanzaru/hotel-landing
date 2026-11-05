@@ -7,7 +7,8 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
 
 - **El sitio debe correr en `http://localhost:4202`.** La API identifica al hotel por la cabecera `Origin`; con otro
   puerto responde 403. El puerto es estricto: si está ocupado, `npm run dev` falla a propósito.
-- Verificación completa antes de cada commit: `npm run verify` (tipos + lint + pruebas + build).
+- Verificación completa antes de cada commit: `npm run verify` (tipos + lint + pruebas + build). Si tocas el
+  `.htaccess` (`src/lib/htaccess.ts`), además `npm run test:apache` (Apache real; `apt-get install apache2`).
 - Nunca hacer `POST /receiveCotization` contra la API real desde pruebas automáticas (crea registros en el PMS).
 - Los datos fiscales del hotel (RFC, razón social…) no deben llegar a `dist/` ni al snapshot.
 - Los enlaces internos se construyen con `import.meta.env.BASE_URL` (el staging va en una subcarpeta).
@@ -15,6 +16,14 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
   con `noindex`). Nunca se despliega: `npm run data:assert-live` lo impide. Datos reales: `npm run data:fetch`.
 - Las pruebas que lanzan `astro build` limpian las variables que Vitest inyecta (`BASE_URL`, `MODE`…); sin eso el
   build hijo ignora `BASE_PATH` y la prueba da un falso fallo.
+
+## Despliegue (playbook 07)
+
+- `npm run build` ejecuta después `scripts/write-htaccess.ts` (genera los `.htaccess` de `dist/`). No hay
+  `.htaccess` fijo en `public/`.
+- `NOINDEX=1` = modo staging (noindex en páginas, cabecera, robots y sitemap). `BASE_PATH=/nuevo/` = subcarpeta.
+- Se publica solo con `.github/workflows/deploy.yml`; operación en `docs/runbooks/cutover.md`. Las acciones van
+  fijadas por SHA; las credenciales FTP solo existen como secretos de GitHub.
 
 ## Sistema de diseño
 

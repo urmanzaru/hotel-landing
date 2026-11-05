@@ -21,6 +21,13 @@ describe('loadSiteConfig', () => {
     expect(config.hotelId).toBe('abc123');
   });
 
+  it('NOINDEX activa el modo staging (sin indexar); por defecto está apagado', () => {
+    expect(loadSiteConfig({}).noindex).toBe(false);
+    expect(loadSiteConfig({ NOINDEX: '1' }).noindex).toBe(true);
+    expect(loadSiteConfig({ NOINDEX: 'true' }).noindex).toBe(true);
+    expect(loadSiteConfig({ NOINDEX: '0' }).noindex).toBe(false);
+  });
+
   it('rechaza un cliente desconocido', () => {
     expect(() => loadSiteConfig({ CLIENT: 'no-existe' })).toThrow(/no existe/);
   });

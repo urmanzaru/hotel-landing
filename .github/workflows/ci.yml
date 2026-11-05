@@ -1,0 +1,72 @@
+# Verificación de cada cambio (playbook 07). Construye con datos de MUESTRA: nunca llama a la API real.
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Tipos, lint, pruebas, build, e2e, Apache y Lighthouse
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npm run check
+      - name: Lint
+        run: npm run lint
+      - name: Formato
+        run: npm run format:check
+      - name: Pruebas unitarias (incluye builds de variantes)
+        run: npm test
+
+      - name: Build (datos de muestra)
+        run: npm run build
+      - name: Imágenes referenciadas existen
+        run: npm run images:check
+
+      - name: Navegador de Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Pruebas e2e
+        run: npm run test:e2e
+
+      - name: Apache para probar el .htaccess
+        run: sudo apt-get install -y --no-install-recommends apache2
+      - name: .htaccess en Apache real
+        run: npm run test:apache
+
+      - name: Lighthouse (presupuestos en móvil)
+        run: npm run lhci
+
+      - name: Informes
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: informes-${{ github.run_id }}
+          path: |
+            playwright-report/
+            .lighthouseci/
+          retention-days: 14
+          if-no-files-found: ignore

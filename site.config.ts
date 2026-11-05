@@ -8,7 +8,13 @@ export const clients: Record<string, ClientConfig> = {
 
 export const DEFAULT_CLIENT = 'lacabana';
 
-export type SiteConfig = ClientConfig;
+export type SiteConfig = ClientConfig & {
+  /**
+   * `NOINDEX=1` (staging): todas las páginas con `noindex`, `robots.txt` que bloquea, sitemap vacío y
+   * `X-Robots-Tag` en el `.htaccess`.
+   */
+  noindex: boolean;
+};
 
 type Env = Record<string, string | undefined>;
 
@@ -46,6 +52,7 @@ export function loadSiteConfig(env: Env = process.env): SiteConfig {
     origin: normalizeUrl('SITE_ORIGIN', origin || client.origin),
     apiBaseUrl: normalizeUrl('PUBLIC_API_URL', apiBaseUrl || client.apiBaseUrl),
     hotelId: hotelId || client.hotelId,
+    noindex: ['1', 'true', 'yes'].includes((env.NOINDEX ?? '').trim().toLowerCase()),
   };
 }
 
