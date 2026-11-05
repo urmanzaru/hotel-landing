@@ -4,7 +4,7 @@
 forma repetible, con staging, respaldo y rollback. El servidor no se configura: solo recibe archivos.
 
 **Prerrequisitos:** el esqueleto puede hacerse justo después de 01; el cutover final requiere 06. Preguntas
-abiertas 3 y 4 respondidas. Credenciales FTP guardadas **solo** como secretos de GitHub (nunca en el repo ni en
+abiertas 2 y 3 del README se resuelven dentro de este playbook con un despliegue de prueba. Credenciales FTP guardadas **solo** como secretos de GitHub (nunca en el repo ni en
 el chat).
 
 ## Estado actual del servidor (según tu captura)
@@ -66,10 +66,21 @@ Usar **Environments** de GitHub; `production` con aprobación manual requerida.
 ## Plan de despliegue por fases
 
 **Fase A — Staging** (no toca producción)
-- [ ] Crear subdominio de pruebas apuntando a una carpeta aparte (pregunta 3). Evitar `/nuevo/` como
-      subcarpeta: rompería rutas absolutas y el `Origin`.
-- [ ] Registrar en el PMS el `Origin` del staging como `url` de un hotel de pruebas, o pedir a backend que
-      acepte ese origen para La Cabaña (si no, el formulario dará 403 en staging).
+> **Restricción confirmada:** solo hay FTP; no se puede crear un subdominio ni tocar el dominio. El staging
+> es, por tanto, una **subcarpeta** del mismo dominio (p. ej. `https://<dominio>/nuevo/`), que convive con el
+> Angular actual en la raíz sin pisarlo.
+
+- [ ] Soportar `BASE_PATH` en `astro.config.ts` (`base: '/nuevo/'` solo en staging; en producción `/`). Todos los
+      enlaces y recursos internos se construyen con `import.meta.env.BASE_URL` (regla en 04), nunca con rutas
+      absolutas escritas a mano. El workflow compila con `BASE_PATH=/nuevo/` para `staging`.
+- [ ] El staging **no se indexa**: `<meta name="robots" content="noindex">` y `X-Robots-Tag: noindex` en el
+      `.htaccess` de esa carpeta; `robots.txt` y sitemap solo en producción.
+- [ ] El `Origin` del navegador es el dominio, **sin ruta**: es el mismo que tendrá producción. Si ese dominio
+      está registrado como `url` del hotel en el PMS correspondiente, el formulario funciona en staging; si no,
+      dará 403 (la API de dev solo conoce `http://localhost:4202`). Hasta entonces, en staging se valida todo
+      salvo el envío real de la cotización.
+- [ ] Primer despliegue de prueba: subir una página mínima a la subcarpeta para averiguar si Actions conecta
+      (pregunta abierta 2) y si hay FTPS (pregunta abierta 3).
 - [ ] Desplegar, recorrer el checklist de 08 y obtener la aprobación del cliente.
 
 **Fase B — Cutover** (ventana de baja actividad)

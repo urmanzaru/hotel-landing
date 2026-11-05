@@ -66,5 +66,7 @@ npm run build && npm run test:e2e -- tests/e2e/design.spec.ts
 ## Riesgos
 
 - Que la salida de la skill choque con la identidad real del hotel: la marca manda; la skill propone.
-- Logo en baja resolución (el adjunto es raster, ~770 px de ancho): pedir el vector (SVG/AI) al cliente. Mientras
-  tanto, usar el PNG con transparencia solo en tamaños ≤ 200 px.
+- Logo en baja resolución (el adjunto es raster, ~770 px de ancho) y **no existe versión vectorial**. Opciones, en
+  orden: (1) usar el PNG con transparencia solo en tamaños ≤ 200 px (se ve nítido en 2×); (2) vectorizar el logo
+  (hay una skill `svg-logo-designer` disponible para recrearlo en SVG) y que el cliente lo apruebe; (3) mostrar el
+  nombre del hotel en tipografía y reservar el logo para favicon y pie de página.

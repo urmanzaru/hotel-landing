@@ -1,9 +1,11 @@
 # 01 — Scaffold del proyecto
 
+> **Estado: ✅ completado.** Ver "Resultado y desviaciones" al final.
+
 **Objetivo:** repositorio Astro + TypeScript estricto con lint, tests, build y estructura lista para los demás
 playbooks. Sin contenido todavía.
 
-**Prerrequisitos:** 00 aprobado. Node 22 (el entorno ya tiene v22) y npm.
+**Prerrequisitos:** 00 aprobado. Node ≥ 22.23.4 (lo exige Astro 7) y npm.
 
 ## Entregables
 
@@ -11,58 +13,72 @@ playbooks. Sin contenido todavía.
 - Estructura de carpetas, scripts npm, `.env.example`, `.nvmrc`, `.gitignore`.
 - Lint/format/typecheck/unit/e2e configurados con una prueba de humo en cada uno.
 
-## Estructura objetivo
+## Estructura actual
 
 ```
 .
-├─ astro.config.mjs            # site, i18n es/en, trailingSlash:'always', build.format:'directory'
-├─ site.config.ts              # carga clients/<CLIENT>.config.ts
-├─ clients/lacabana.config.ts  # hotelId, origin, tema, coordenadas, contacto, idiomas
-├─ .env.example                # CLIENT, PUBLIC_API_URL, HOTEL_ID, SITE_ORIGIN
-├─ scripts/                    # fetch-snapshot.ts, check-images.ts
+├─ astro.config.ts             # site, i18n es/en, trailingSlash:'always', build.format:'directory', puerto estricto
+├─ site.config.ts              # loadSiteConfig(): cliente (CLIENT) + sobrescrituras de entorno
+├─ clients/types.ts            # tipo ClientConfig + defineClient()
+├─ clients/lacabana.config.ts  # hotelId, origin, apiBaseUrl, horarios, coordenadas, tema
+├─ .env.example                # CLIENT, SITE_ORIGIN, PUBLIC_API_URL, HOTEL_ID
 ├─ src/
-│  ├─ data/                    # client.ts, schemas.ts, mappers.ts, snapshot loader
-│  ├─ i18n/                    # es.json, en.json, helpers
-│  ├─ layouts/  components/  pages/  pages/en/
-│  ├─ islands/                 # quote-form.ts (JS solo aquí)
-│  └─ styles/                  # tokens.css, base.css
-├─ public/                     # .htaccess, robots.txt, favicon
-├─ tests/unit  tests/e2e
-├─ docs/playbooks  docs/brand
-└─ .github/workflows
+│  ├─ env.d.ts                 # declara __SITE_CONFIG__ (inyectado en el build)
+│  ├─ lib/site.ts              # siteConfig para las páginas
+│  └─ pages/index.astro        # portada provisional
+├─ tests/unit/site-config.test.ts   tests/e2e/home.spec.ts
+├─ .claude/                    # settings.json (plugin ui-ux-pro-max) y launch.json (puerto 4202)
+└─ docs/playbooks  docs/brand
 ```
+
+Las carpetas `scripts/`, `src/data/`, `src/i18n/`, `src/islands/` y `src/styles/` se crean en el playbook que
+las usa (02–05), no antes.
 
 ## Pasos
 
-- [ ] `npm create astro@latest` (plantilla *minimal*, TypeScript *strictest*, sin instalar integraciones extra).
-- [ ] Fijar `engines.node >=22` y crear `.nvmrc` con `22`.
-- [ ] `astro.config.mjs`: `site` desde `SITE_ORIGIN`, `trailingSlash: 'always'`, `build.format: 'directory'`
-      (genera `/habitaciones/index.html`: funciona en Apache sin reglas), i18n `defaultLocale: 'es'`,
-      `locales: ['es','en']`, `routing.prefixDefaultLocale: false`.
-- [ ] Dependencias: `zod`, `sharp` (ya incluida por Astro), `@astrojs/sitemap`.
-      Desarrollo: `typescript`, `eslint` + `eslint-plugin-astro`, `prettier` + `prettier-plugin-astro`,
-      `vitest`, `@playwright/test`, `@lhci/cli`, `tsx`.
-- [ ] `clients/lacabana.config.ts` con valores reales conocidos: `hotelId: '5fe1ffca46f0600fec51463d'`
-      (dev), `origin` de producción (pregunta abierta 2), zona horaria, `entryTime 15:00`, `departureTime 12:00`.
-- [ ] Scripts npm:
-      `dev`, `build`, `preview`, `check` (`astro check`), `lint`, `format`, `test`, `test:e2e`,
-      `data:fetch` (`tsx scripts/fetch-snapshot.ts`), `verify` (`check && lint && test && build`).
-- [ ] `.env.example` con todas las variables y comentarios; `.env` en `.gitignore`. Los secretos de FTP **nunca**
-      van al repo (solo GitHub Secrets, ver 07).
-- [ ] `.gitignore`: `node_modules`, `dist`, `.astro`, `.env*` (salvo `.env.example`), `.cache`, `test-results`,
-      `src/data/snapshot.json` (el snapshot se genera, no se versiona).
-- [ ] Una prueba unitaria trivial y un e2e que abra la portada vacía.
+- [x] Proyecto Astro creado a mano (no con `npm create astro`) para que sea reproducible.
+- [x] `engines.node >=22.23.4` y `.nvmrc` con `22`.
+- [x] `astro.config.ts`: `site` desde `SITE_ORIGIN`, `trailingSlash: 'always'`, `build.format: 'directory'`,
+      i18n `es` por defecto sin prefijo y `en`, sitemap, **puerto tomado de `SITE_ORIGIN` y estricto**.
+- [x] Dependencias con versión exacta: `astro`, `@astrojs/sitemap`, `zod`; desarrollo: `typescript`,
+      `@astrojs/check`, `eslint`, `typescript-eslint`, `eslint-plugin-astro`, `prettier`,
+      `prettier-plugin-astro`, `vitest`, `@playwright/test`, `tsx`.
+- [x] `clients/lacabana.config.ts` con los valores de desarrollo (API de dev, origen `http://localhost:4202`).
+- [x] Scripts npm: `dev`, `build`, `preview`, `check`, `lint`, `format`, `format:check`, `test`, `test:e2e`,
+      `data:fetch` (se activa en 02), `verify`.
+- [x] `.env.example`, `.env` ignorado. Credenciales FTP solo en GitHub Secrets (07).
+- [x] `.gitignore` incluye `src/data/snapshot.json`, `.cache/`, `reports/`.
+- [x] Prueba unitaria (`loadSiteConfig`, 5 casos) y e2e de la portada.
+- [ ] `@lhci/cli` (Lighthouse CI): se instala en 06, cuando haya páginas que medir.
 
-## Criterios de aceptación
+## Criterios de aceptación (todos verificados)
 
 ```bash
 npm ci
 npm run verify          # check + lint + test + build sin errores
-ls dist/index.html      # existe
-git status --short      # sin archivos generados sin ignorar
+npm run test:e2e        # portada responde 200
 ```
 
-## Riesgos
+## Resultado y desviaciones respecto al plan original
 
-- Plantillas de Astro que traen dependencias que no usamos → revisar `package.json` y quitar lo sobrante.
-- Versiones: fijar versiones exactas en el lockfile y no usar `latest` en CI.
+| Tema | Decisión | Motivo |
+|---|---|---|
+| TypeScript | **6.0.3**, no 7.0.2 | `@astrojs/check` solo acepta TypeScript 5 o 6; instalar 7 exigía `--force`. |
+| Playwright | **1.63.0** exacto | Coincide con los navegadores preinstalados en el entorno de Claude Code en la nube. |
+| `astro.config` | `.ts`, no `.mjs` | Importa `site.config.ts` directamente y comparte tipos. |
+| Puerto | `vite.server.strictPort: true` | El PMS identifica al hotel por `Origin`; si el puerto 4202 está ocupado, `dev` **debe fallar** en lugar de saltar a 4203 (con 4203 la API respondería 403). |
+| Dependencias de lint | `defineConfig` de `eslint/config` | `tseslint.config` está deprecada. |
+| Vulnerabilidades | `npm audit --omit=dev` → 0; 10 *moderate* solo en herramientas de desarrollo (`minimatch` dentro de `@astrojs/check`) | No llegan a `dist/`; se revisan en cada actualización de dependencias. |
+| `lhci` | Pospuesto a 06 | Sin páginas no hay nada que medir. |
+
+### Aviso: servidores en segundo plano en el entorno de Claude Code
+
+Astro 7 lanza `astro dev` y `astro preview` **como proceso en segundo plano** cuando detecta que lo ejecuta un
+agente (variables como `AI_AGENT`). En tu equipo y en GitHub Actions corren en primer plano, sin cambios. En
+el entorno en la nube:
+
+- Parar con `npx astro dev stop` / `npx astro preview stop`; ver estado con `status`, registros con `logs`.
+- Un servidor olvidado ocupa el 4202; con el puerto estricto, el siguiente `dev` fallará con
+  `Dev server process exited before becoming ready` (ver `astro dev logs`). Es la señal para detener el anterior.
+- Para el e2e, Playwright no puede arrancar un servidor que se va a segundo plano: levantar primero
+  `npx astro preview --port 4202` y ejecutar `npm run test:e2e` (reutiliza el servidor existente).

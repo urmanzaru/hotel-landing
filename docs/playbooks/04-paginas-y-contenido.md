@@ -41,6 +41,9 @@ en el build.
 - [ ] `src/i18n/`: archivos de textos y helper `t(locale, key)` con comprobación de claves faltantes en build.
 - [ ] `src/layouts/Base.astro`: `<html lang>`, metadatos, `Header`, `Footer`, enlaces `hreflang`.
 - [ ] Rutas dinámicas con `getStaticPaths()` desde el snapshot; una sola fuente de plantillas para es/en.
+- [ ] Enlaces y recursos internos siempre con `import.meta.env.BASE_URL` (un helper `url(path)`), porque el
+      staging se sirve desde una subcarpeta (`/nuevo/`, ver 07). Una prueba falla si encuentra un `href="/..."`
+      escrito a mano en el HTML generado.
 - [ ] Página de inicio con las secciones del mapa; imágenes con `Picture`, la del hero con `fetchpriority="high"`
       y el resto `loading="lazy"`.
 - [ ] Lista y detalle de habitaciones; el detalle incluye galería propia y CTA que lleva a

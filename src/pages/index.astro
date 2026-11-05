@@ -1,0 +1,19 @@
+---
+import { siteConfig } from '../lib/site';
+---
+
+<!doctype html>
+<html lang={siteConfig.defaultLocale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sitio en construcción</title>
+    <meta name="robots" content="noindex" />
+  </head>
+  <body>
+    <main>
+      <h1>Sitio en construcción</h1>
+      <p data-testid="client">Cliente: {siteConfig.slug}</p>
+    </main>
+  </body>
+</html>

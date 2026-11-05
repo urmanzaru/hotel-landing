@@ -1,8 +1,7 @@
 # Playbooks — Sitio web de hotel alimentado por el PMS
 
 Plan de implementación desde cero, dividido en playbooks ejecutables en orden. Cada playbook tiene **objetivo,
-prerrequisitos, entregables, pasos, criterios de aceptación verificables y riesgos**. Ninguno se ejecuta hasta que
-este plan sea revisado y aprobado.
+prerrequisitos, entregables, pasos, criterios de aceptación verificables y riesgos**.
 
 ## Decisión en una línea
 
@@ -10,20 +9,20 @@ este plan sea revisado y aprobado.
 FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni configuración. Detalle y alternativas en
 [00](./00-decisiones-y-arquitectura.md).
 
-## Índice y orden
+## Índice, orden y estado
 
-| # | Playbook | Resultado | Depende de |
-|---|---|---|---|
-| 00 | [Decisiones y arquitectura](./00-decisiones-y-arquitectura.md) | Stack elegido, alcance v1, riesgos | — |
-| 01 | [Scaffold del proyecto](./01-scaffold-proyecto.md) | Repo Astro + TS con lint/test/build | 00 |
-| 02 | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md) | Cliente de API, snapshot, pipeline de imágenes | 01 |
-| 03 | [Sistema de diseño](./03-sistema-de-diseno.md) | Tokens, tipografía, componentes base (ui-ux-pro-max) | 01 |
-| 04 | [Páginas y contenido](./04-paginas-y-contenido.md) | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03 |
-| 05 | [Cotización](./05-cotizacion.md) | Formulario que hace `POST /receiveCotization` | 02, 03 |
-| 06 | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA | 04, 05 |
-| 07 | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md) | Pipeline, staging, cutover y rollback | 01 (esqueleto), 06 (final) |
-| 08 | [Pruebas y calidad](./08-pruebas-y-calidad.md) | Unit, e2e, checklist de release | transversal |
-| 09 | [Operación y replicación a otros hoteles](./09-operacion-y-nuevos-clientes.md) | Runbooks, pedidos al backend, alta de cliente | 07 |
+| #   | Playbook                                                       | Resultado                                                             | Depende de                 | Estado       |
+| --- | -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------- | ------------ |
+| 00  | [Decisiones y arquitectura](./00-decisiones-y-arquitectura.md) | Stack elegido, alcance v1, riesgos                                    | —                          | ✅ Aprobado  |
+| 01  | [Scaffold del proyecto](./01-scaffold-proyecto.md)             | Repo Astro + TS con lint/test/build                                   | 00                         | ✅ Completo  |
+| 02  | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md)       | Cliente de API, snapshot, pipeline de imágenes                        | 01                         | ⏭ Siguiente |
+| 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | Pendiente    |
+| 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | Pendiente    |
+| 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | Pendiente    |
+| 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | Pendiente    |
+| 07  | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md)   | Pipeline, publicación y rollback                                      | 01 (esqueleto), 06 (final) | Pendiente    |
+| 08  | [Pruebas y calidad](./08-pruebas-y-calidad.md)                 | Unit, e2e, checklist de release                                       | transversal                | Continuo     |
+| 09  | [Operación y replicación a otros hoteles](./09-operacion-y-nuevos-clientes.md) | Runbooks, pedidos al backend, alta de cliente         | 07                         | Pendiente    |
 
 ```
 00 → 01 ─┬→ 02 ─┬→ 04 ─┐
@@ -32,33 +31,52 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
          └→ 07(esqueleto, en paralelo)        08 acompaña a todos
 ```
 
-## Preguntas abiertas (bloquean o cambian el plan)
+## Decisiones tomadas
 
-1. **URL base de la API en producción.** Tu documento levanta `https://apihotel-dev.spinoff.website`. La URL que
-   mencionaste (`https://www.lacabanapuertoangel.com/hotel`) es una ruta del sitio actual. ¿La API de producción es
-   otra? Va en la variable `PUBLIC_API_URL`. *(Bloquea 02.)*
-2. **Origin registrado en el PMS.** La API identifica el hotel por la cabecera `Origin`. En producción, el campo
-   `url` del hotel debe coincidir exactamente con el dominio del sitio (con o sin `www`, `https`). *(Bloquea el
-   formulario de cotización en producción.)*
-3. **Hosting.** Por el `.htaccess` y `cgi-bin` parece Apache/cPanel. ¿Hay FTP simple o también FTPS/SFTP?
-   ¿Puedes crear un subdominio de pruebas (p. ej. `nuevo.lacabanapuertoangel.com`) apuntando a otra carpeta?
-   *(Define el staging en 07.)*
-4. **¿El hosting acepta conexiones desde GitHub Actions?** Algunos limitan el FTP por IP. Si no, hay plan B manual
-   (build local + subir `dist/`). *(07.)*
-5. **Idiomas.** El PMS tiene campos en español e inglés. Se asume **es (principal) + en**.
-6. **Plugin `ui-ux-pro-max`.** Los comandos `/plugin ...` los ejecutas tú en Claude Code; yo no puedo ejecutarlos
-   desde esta sesión. Hay que correrlos antes del playbook 03:
-   ```
-   /plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
-   /plugin install ui-ux-pro-max@ui-ux-pro-max-skill
-   ```
+| Tema                       | Decisión                                                                                                                                                                                                                                                                                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API en esta etapa          | `https://apihotel-dev.spinoff.website` (entorno de pruebas). La API de producción es otra y su URL se define después (`PUBLIC_API_URL`).                                                                                                                                                                                                  |
+| Origen en desarrollo       | El PMS tiene registrado `http://localhost:4202` como `url` del hotel. **El sitio siempre debe correr en el puerto 4202** (`npm run dev`); si está ocupado, el comando falla a propósito.                                                                                                                                                  |
+| Hosting                    | Solo FTP. **No hay acceso al servidor ni al dominio** y no se puede pedir nada más. Se descarta el staging en subdominio; ver el ajuste en [07](./07-ci-cd-y-despliegue-ftp.md).                                                                                                                                                         |
+| Logo                       | Solo existe el PNG (≈770 px). Se usa tal cual en tamaños pequeños y se vectoriza si hace falta (ver [03](./03-sistema-de-diseno.md)).                                                                                                                                                                                                    |
+
+## Preguntas abiertas
+
+1. **Origen de producción registrado en el PMS.** Cuando haya dominio definitivo, el campo `url` del hotel en el PMS
+   (o en el PMS de producción) debe coincidir con él; si no, la API responde 403 y el formulario no funciona.
+   *No bloquea el desarrollo.*
+2. **¿Acepta el hosting conexiones FTP desde GitHub Actions?** Algunos limitan por IP. Si no, el plan B es construir en
+   tu equipo y subir `dist/` con tu cliente FTP. Se averigua en 07 con un despliegue de prueba, no antes.
+3. **¿FTP plano o FTPS?** Se prueba en 07; si solo hay FTP plano, se rota la contraseña tras el lanzamiento.
+4. **Idiomas.** Se asume español (principal) + inglés.
+
+## Cómo activar el plugin ui-ux-pro-max (necesario para el playbook 03)
+
+Los comandos de tu mensaje son *comandos de barra de Claude Code*: se escriben en el cuadro de mensaje (no en una
+terminal del sistema), de uno en uno:
+
+```
+/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+```
+
+Espera la confirmación y luego:
+
+```
+/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+```
+
+Después reinicia la sesión (o ejecuta `/reload-plugins`) para que cargue. Para no depender de esto, el repo incluye
+`.claude/settings.json` con el marketplace y el plugin ya declarados: al abrir el proyecto en Claude Code y aceptar
+la confianza de carpeta, ofrece instalarlo. Si la interfaz que uses no acepta `/plugin`, usa Claude Code en la
+terminal (`claude`) dentro de la carpeta del proyecto.
 
 ## Supuestos (corrígelos si no aplican)
 
 - Alcance v1 según tu mensaje: **imágenes, tipos de habitación y cotizar**. Sin portadas (`/card?type=1`) y sin
   disponibilidad/planes/tarifas (`/roomAvailable` da 403 y `/plan` da 401 en dev).
-- La API no se pudo consultar desde este entorno (el proxy bloquea los hosts). Todo lo dicho sobre la API sale de
-  `api-endpoints.md` y debe verificarse en el paso 1 del playbook 02.
+- La API no se pudo consultar desde el entorno de Claude Code en la nube (su proxy bloquea los hosts). Lo que se sabe
+  de ella sale de `api-endpoints.md` y se verifica en el paso 1 del playbook 02, **que debe correr en un equipo con
+  acceso a la API** (el tuyo) o con el host permitido en el entorno.
 - Cada cliente (hotel) recibe **su propio sitio** desde este mismo código, con configuración y tema por cliente.
 
 ## Cómo usar un playbook

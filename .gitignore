@@ -1,0 +1,23 @@
+# dependencias y salida de build
+node_modules/
+dist/
+.astro/
+
+# entorno y secretos
+.env
+.env.*
+!.env.example
+
+# datos generados en build (se regeneran, no se versionan)
+.cache/
+reports/
+src/data/snapshot.json
+
+# pruebas
+test-results/
+playwright-report/
+coverage/
+
+# sistema
+.DS_Store
+*.log

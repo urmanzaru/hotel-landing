@@ -3,7 +3,14 @@
 **Objetivo:** un cliente de API tipado y validado, un `snapshot.json` público y seguro, y un pipeline de imágenes
 tolerante a fallos. Todo en **build**; el navegador no consume esta capa.
 
-**Prerrequisitos:** 01 completo. Respuesta a la pregunta abierta 1 (URL base) y 2 (Origin de producción).
+**Prerrequisitos:** 01 completo (✅). En esta etapa se trabaja contra la API de dev
+(`https://apihotel-dev.spinoff.website`) con `Origin: http://localhost:4202`, que ya están en
+`clients/lacabana.config.ts`. La URL y el origen de producción se definen más adelante y solo cambian variables
+de entorno.
+
+> **El paso 1 (verificar el contrato) necesita acceso real a la API.** El entorno de Claude Code en la nube no
+> la alcanza (su proxy bloquea el host). Se ejecuta en tu equipo, o se añade `apihotel-dev.spinoff.website` a los
+> hosts permitidos del entorno de la sesión.
 
 ## Entregables
 
