@@ -48,3 +48,10 @@ export function loadSiteConfig(env: Env = process.env): SiteConfig {
     hotelId: hotelId || client.hotelId,
   };
 }
+
+/** Normaliza la base del sitio: siempre empieza y termina con `/` (`""` → `/`, `nuevo` → `/nuevo/`). */
+export function normalizeBase(raw: string | undefined): string {
+  const trimmed = (raw ?? '').trim().replace(/^\/+|\/+$/g, '');
+  if (/[^A-Za-z0-9._~/-]/.test(trimmed)) throw new Error(`BASE_PATH no válido: "${raw}"`);
+  return trimmed ? `/${trimmed}/` : '/';
+}

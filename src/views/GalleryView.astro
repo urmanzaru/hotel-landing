@@ -1,0 +1,71 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Alert from '../components/Alert.astro';
+import Gallery from '../components/Gallery.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { hotelGallery, photoCredits } from '../lib/photos.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const photos = hotelGallery(getSnapshot(), locale);
+const credits = photoCredits(photos);
+---
+
+<Page
+  locale={locale}
+  current="gallery"
+  label={t(locale, 'gallery.title')}
+  description={t(locale, 'gallery.lead')}
+>
+  <PageHeader locale={locale} title={t(locale, 'gallery.title')} lead={t(locale, 'gallery.lead')} />
+  <Section tight>
+    {photos.length > 0 ? (
+      <Gallery locale={locale} label={t(locale, 'gallery.title')} items={photos} />
+    ) : (
+      <Alert variant="info">{t(locale, 'gallery.empty')}</Alert>
+    )}
+    {credits.length > 0 && (
+      <aside class="credits" aria-labelledby="credits-title">
+        <h2 id="credits-title">{t(locale, 'gallery.credits')}</h2>
+        <ul role="list">
+          {credits.map((credit) => (
+            <li>
+              {credit.href ? (
+                <a href={credit.href} rel="noopener noreferrer" target="_blank">
+                  {credit.author}
+                </a>
+              ) : (
+                <span>{credit.author}</span>
+              )}
+              {credit.work && <span class="credits__work"> — {credit.work}</span>}
+            </li>
+          ))}
+        </ul>
+      </aside>
+    )}
+  </Section>
+</Page>
+
+<style>
+  .credits {
+    margin-top: var(--space-8);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+  }
+  .credits h2 {
+    margin-bottom: var(--space-2);
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    color: var(--color-text);
+  }
+  .credits ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+</style>

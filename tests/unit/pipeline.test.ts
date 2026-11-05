@@ -222,6 +222,7 @@ describe('runPipeline (política de fallo)', () => {
 describe('assertSnapshotSane', () => {
   const base = (): Snapshot => ({
     schemaVersion: 1,
+    dataSource: 'api',
     generatedAt: '2026-01-01T00:00:00.000Z',
     contentHash: 'x',
     hotel: {

@@ -1,0 +1,82 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Button from '../components/Button.astro';
+import Gallery from '../components/Gallery.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { paragraphs, pick, roomMeta, truncate } from '../lib/content.ts';
+import { roomGallery } from '../lib/photos.ts';
+import { otherLocale, roomUrl, routeUrl } from '../lib/routes.ts';
+
+interface Props {
+  locale: Locale;
+  slug: string;
+}
+const { locale, slug } = Astro.props;
+const snapshot = getSnapshot();
+const room = snapshot.roomTypes.find((candidate) => candidate.slug === slug);
+if (!room) throw new Error(`No existe la habitación "${slug}" en el snapshot`);
+
+const name = pick(room.name, locale);
+const description = pick(room.description, locale);
+const photos = roomGallery(snapshot, room, locale);
+const quoteHref = `${routeUrl('quote', locale)}?room=${encodeURIComponent(room.slug)}`;
+---
+
+<Page
+  locale={locale}
+  current="rooms"
+  label={name}
+  description={truncate(description || t(locale, 'rooms.lead'), 155)}
+  alternate={roomUrl(otherLocale(locale), room.slug)}
+>
+  <PageHeader
+    locale={locale}
+    title={name}
+    lead={roomMeta(locale, room)}
+    trail={[{ label: t(locale, 'rooms.title'), href: routeUrl('rooms', locale) }]}
+  />
+  <Section tight>
+    <div class="detail">
+      <div class="detail__text">
+        {paragraphs(description).map((paragraph) => (
+          <p class="detail__p">{paragraph}</p>
+        ))}
+        <div class="detail__actions">
+          <Button href={quoteHref} size="lg">
+            {t(locale, 'rooms.quote')}
+          </Button>
+          <Button href={routeUrl('rooms', locale)} variant="ghost">
+            {t(locale, 'rooms.back')}
+          </Button>
+        </div>
+      </div>
+    </div>
+  </Section>
+
+  {photos.length > 0 && (
+    <Section tone="cream" title={t(locale, 'rooms.photos', { name })}>
+      <Gallery locale={locale} label={t(locale, 'rooms.photos', { name })} items={photos} />
+    </Section>
+  )}
+</Page>
+
+<style>
+  .detail__text {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 46rem;
+  }
+  .detail__p {
+    white-space: pre-line;
+    font-size: var(--text-lg);
+  }
+  .detail__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+</style>

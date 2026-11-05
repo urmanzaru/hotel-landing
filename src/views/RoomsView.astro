@@ -1,0 +1,78 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Alert from '../components/Alert.astro';
+import Button from '../components/Button.astro';
+import PageHeader from '../components/PageHeader.astro';
+import RoomCard from '../components/RoomCard.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { pick, roomMeta } from '../lib/content.ts';
+import { roomCover } from '../lib/photos.ts';
+import { roomUrl, routeUrl } from '../lib/routes.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const snapshot = getSnapshot();
+const rooms = snapshot.roomTypes;
+---
+
+<Page
+  locale={locale}
+  current="rooms"
+  label={t(locale, 'rooms.title')}
+  description={t(locale, 'rooms.lead')}
+>
+  <PageHeader locale={locale} title={t(locale, 'rooms.title')} lead={t(locale, 'rooms.lead')} />
+  <Section tight>
+    {rooms.length > 0 ? (
+      <ul role="list" class="cards">
+        {rooms.map((room) => (
+          <li>
+            <RoomCard
+              href={roomUrl(locale, room.slug)}
+              name={pick(room.name, locale)}
+              meta={roomMeta(locale, room)}
+              description={pick(room.description, locale) || undefined}
+              cta={t(locale, 'rooms.view')}
+              asset={roomCover(snapshot, room)}
+              headingLevel="h2"
+            />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="empty">
+        <Alert variant="info">{t(locale, 'rooms.empty')}</Alert>
+        <p>
+          <Button href={routeUrl('contact', locale)}>{t(locale, 'nav.contact')}</Button>
+        </p>
+      </div>
+    )}
+  </Section>
+</Page>
+
+<style>
+  .cards {
+    display: grid;
+    gap: var(--space-5);
+  }
+  .empty {
+    display: grid;
+    gap: var(--space-4);
+    max-width: 40rem;
+  }
+  @media (min-width: 48rem) {
+    .cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 64rem) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

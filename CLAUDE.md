@@ -11,6 +11,10 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
 - Nunca hacer `POST /receiveCotization` contra la API real desde pruebas automáticas (crea registros en el PMS).
 - Los datos fiscales del hotel (RFC, razón social…) no deben llegar a `dist/` ni al snapshot.
 - Los enlaces internos se construyen con `import.meta.env.BASE_URL` (el staging va en una subcarpeta).
+- **Datos de muestra**: sin `src/data/snapshot.json`, `dev` y `build` generan uno de MUESTRA (`dataSource: "fixture"`,
+  con `noindex`). Nunca se despliega: `npm run data:assert-live` lo impide. Datos reales: `npm run data:fetch`.
+- Las pruebas que lanzan `astro build` limpian las variables que Vitest inyecta (`BASE_URL`, `MODE`…); sin eso el
+  build hijo ignora `BASE_PATH` y la prueba da un falso fallo.
 
 ## Sistema de diseño
 

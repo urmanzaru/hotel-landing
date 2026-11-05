@@ -7,7 +7,10 @@ let cached: Snapshot | undefined;
 
 export function getSnapshot(): Snapshot {
   if (cached) return cached;
-  const file = path.join(process.cwd(), 'src', 'data', 'snapshot.json');
+  // `SNAPSHOT_PATH` permite construir con otro snapshot (pruebas de casos vacíos, p. ej.).
+  const file = process.env['SNAPSHOT_PATH']
+    ? path.resolve(process.env['SNAPSHOT_PATH'])
+    : path.join(process.cwd(), 'src', 'data', 'snapshot.json');
   let raw: string;
   try {
     raw = readFileSync(file, 'utf8');

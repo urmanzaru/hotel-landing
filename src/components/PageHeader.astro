@@ -1,0 +1,46 @@
+---
+/** Banda de título de las páginas interiores: migas de pan + título (único `<h1>`) + introducción. */
+import type { Locale } from '../../clients/types.ts';
+import { t } from '../i18n/ui.ts';
+import { routeUrl } from '../lib/routes.ts';
+import Breadcrumb from './Breadcrumb.astro';
+import WaveDivider from './WaveDivider.astro';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  lead?: string | undefined;
+  /** Tramos intermedios de la ruta, entre «Inicio» y la página actual. */
+  trail?: { label: string; href: string }[];
+}
+
+const { locale, title, lead, trail = [] } = Astro.props;
+const items = [
+  { label: t(locale, 'nav.home'), href: routeUrl('home', locale) },
+  ...trail,
+  { label: title },
+];
+---
+
+<div class="page-head">
+  <div class="container">
+    <Breadcrumb label={t(locale, 'nav.breadcrumb')} items={items} />
+    <h1>{title}</h1>
+    {lead && <p class="lead">{lead}</p>}
+  </div>
+</div>
+<WaveDivider from="var(--color-cream)" color="var(--color-surface)" />
+
+<style>
+  .page-head {
+    padding-block: var(--space-6) var(--space-5);
+    background: var(--color-cream);
+  }
+  .page-head h1 {
+    margin-top: var(--space-4);
+  }
+  .page-head .lead {
+    margin-top: var(--space-3);
+    color: var(--color-text);
+  }
+</style>

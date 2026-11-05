@@ -1,0 +1,42 @@
+---
+/** Página de error 404 (Apache la sirve con `ErrorDocument 404 /404.html`). Bilingüe: no se sabe el idioma del visitante. */
+import Alert from '../components/Alert.astro';
+import Button from '../components/Button.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { routeUrl } from '../lib/routes.ts';
+---
+
+<Page locale="es" label={t('es', 'notfound.title')} noindex>
+  <PageHeader locale="es" title={t('es', 'notfound.title')} lead={t('es', 'notfound.text')} />
+  <Section narrow tight>
+    <Alert variant="info" title="English">
+      <span lang="en">
+        {t('en', 'notfound.title')}. {t('en', 'notfound.text')}
+      </span>
+    </Alert>
+    <p class="actions">
+      <Button href={routeUrl('home', 'es')}>{t('es', 'notfound.home')}</Button>
+      <Button href={routeUrl('home', 'en')} variant="secondary">
+        <span lang="en">{t('en', 'notfound.home')}</span>
+      </Button>
+      <Button href={routeUrl('rooms', 'es')} variant="ghost">
+        {t('es', 'nav.rooms')}
+      </Button>
+      <Button href={routeUrl('contact', 'es')} variant="ghost">
+        {t('es', 'nav.contact')}
+      </Button>
+    </p>
+  </Section>
+</Page>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-5);
+  }
+</style>

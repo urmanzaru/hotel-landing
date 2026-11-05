@@ -11,11 +11,13 @@ interface Props {
   hotelName: string;
   /** Ruta actual (para `aria-current` y para el enlace al otro idioma). */
   current?: RouteKey | undefined;
+  /** Enlace exacto a la misma página en el otro idioma (p. ej. detalle de habitación); por defecto, la ruta equivalente. */
+  alternateHref?: string | undefined;
 }
 
-const { locale, hotelName, current } = Astro.props;
+const { locale, hotelName, current, alternateHref } = Astro.props;
 const other = otherLocale(locale);
-const switchHref = routeUrl(current ?? 'home', other);
+const switchHref = alternateHref ?? routeUrl(current ?? 'home', other);
 const logoBase = siteConfig.logoFile;
 const logoSrcset = logoBase
   ? [96, 192, 384].map((w) => `${url(`brand/${logoBase}-${w}.webp`)} ${w}w`).join(', ')

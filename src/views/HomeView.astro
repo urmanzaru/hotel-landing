@@ -1,0 +1,180 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Button from '../components/Button.astro';
+import Gallery from '../components/Gallery.astro';
+import Picture from '../components/Picture.astro';
+import RoomCard from '../components/RoomCard.astro';
+import Section from '../components/Section.astro';
+import WaveDivider from '../components/WaveDivider.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { addressLine, pick, roomMeta } from '../lib/content.ts';
+import { heroImage, hotelGallery, roomCover } from '../lib/photos.ts';
+import { roomUrl, routeUrl } from '../lib/routes.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const snapshot = getSnapshot();
+const { hotel } = snapshot;
+const hero = heroImage(snapshot);
+const featured = snapshot.roomTypes.slice(0, 3);
+const photos = hotelGallery(snapshot, locale).slice(0, 4);
+const address = addressLine(hotel.address);
+const description = pick(hotel.description, locale);
+const category = pick(hotel.category, locale);
+---
+
+<Page locale={locale} current="home" label={null}>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container hero__grid">
+      <div class="hero__text">
+        {category && <p class="eyebrow">{category}</p>}
+        <h1 id="hero-title">{pick(hotel.name, locale)}</h1>
+        {description && <p class="lead">{description}</p>}
+        <div class="hero__actions">
+          <Button href={routeUrl('quote', locale)} size="lg">
+            {t(locale, 'cta.quote.long')}
+          </Button>
+          {featured.length > 0 && (
+            <Button href={routeUrl('rooms', locale)} variant="secondary" size="lg">
+              {t(locale, 'home.hero.cta.rooms')}
+            </Button>
+          )}
+        </div>
+      </div>
+      <div class="hero__media">
+        <Picture
+          asset={hero}
+          alt={hero?.name || pick(hotel.name, locale)}
+          ratio="arch"
+          priority
+          sizes="(min-width: 48rem) 40vw, 80vw"
+        />
+      </div>
+    </div>
+  </section>
+  <WaveDivider from="var(--color-cream)" color="var(--color-surface)" />
+
+  {featured.length > 0 && (
+    <Section
+      id="habitaciones"
+      eyebrow={t(locale, 'nav.rooms')}
+      title={t(locale, 'home.rooms.title')}
+    >
+      <Fragment slot="lead">{t(locale, 'home.rooms.lead')}</Fragment>
+      <ul role="list" class="cards">
+        {featured.map((room) => (
+          <li>
+            <RoomCard
+              href={roomUrl(locale, room.slug)}
+              name={pick(room.name, locale)}
+              meta={roomMeta(locale, room)}
+              description={pick(room.description, locale) || undefined}
+              cta={t(locale, 'rooms.view')}
+              asset={roomCover(snapshot, room)}
+              headingLevel="h3"
+            />
+          </li>
+        ))}
+      </ul>
+      <p class="more">
+        <Button href={routeUrl('rooms', locale)} variant="secondary">
+          {t(locale, 'home.rooms.all')}
+        </Button>
+      </p>
+    </Section>
+  )}
+
+  {photos.length > 0 && (
+    <Section id="fotos" tone="cream" title={t(locale, 'home.gallery.title')}>
+      <Gallery locale={locale} label={t(locale, 'gallery.title')} items={photos} />
+      <p class="more">
+        <Button href={routeUrl('gallery', locale)} variant="secondary">
+          {t(locale, 'home.gallery.all')}
+        </Button>
+      </p>
+    </Section>
+  )}
+
+  <Section id="ubicacion" title={t(locale, 'home.location.title')}>
+    <Fragment slot="lead">{t(locale, 'location.lead')}</Fragment>
+    {address && <p class="address">{address}</p>}
+    <p class="more">
+      <Button href={routeUrl('location', locale)} variant="secondary">
+        {t(locale, 'home.location.more')}
+      </Button>
+    </p>
+  </Section>
+
+  <Section id="cotizar" tone="deep" title={t(locale, 'home.cta.title')} narrow>
+    <Fragment slot="lead">{t(locale, 'home.cta.lead')}</Fragment>
+    <Button href={routeUrl('quote', locale)} variant="light" size="lg">
+      {t(locale, 'cta.quote.long')}
+    </Button>
+  </Section>
+</Page>
+
+<style>
+  .hero {
+    padding-block: var(--space-6) var(--space-5);
+    background: var(--color-cream);
+  }
+  .hero__grid {
+    display: grid;
+    gap: var(--space-6);
+    align-items: center;
+  }
+  .hero__text {
+    display: grid;
+    gap: var(--space-4);
+    justify-items: start;
+  }
+  .hero__text h1 {
+    font-size: var(--text-4xl);
+  }
+  .hero__text .lead {
+    color: var(--color-text);
+  }
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+  .hero__media {
+    max-width: 24rem;
+    width: 100%;
+    justify-self: center;
+  }
+  .cards {
+    display: grid;
+    gap: var(--space-5);
+  }
+  .more {
+    margin-top: var(--space-6);
+  }
+  .address {
+    font-size: var(--text-lg);
+    max-width: 40ch;
+  }
+
+  @media (min-width: 48rem) {
+    .hero__grid {
+      grid-template-columns: 1.2fr 0.8fr;
+    }
+    .hero__media {
+      justify-self: end;
+    }
+    .cards {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (min-width: 64rem) {
+    .cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>

@@ -25,3 +25,8 @@ export function routeUrl(key: RouteKey, locale: Locale): string {
 export function otherLocale(locale: Locale): Locale {
   return locale === 'es' ? 'en' : 'es';
 }
+
+/** URL de una habitación: `/habitaciones/<slug>/` (es) o `/en/rooms/<slug>/` (en). El slug es el mismo en ambos idiomas. */
+export function roomUrl(locale: Locale, slug: string): string {
+  return url(`${routes.rooms[locale]}${slug}/`);
+}

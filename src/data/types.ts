@@ -79,6 +79,11 @@ export type PublicRoomType = z.infer<typeof publicRoomTypeSchema>;
 
 export const snapshotSchema = z.object({
   schemaVersion: z.literal(1),
+  /**
+   * `api` = datos reales del PMS. `fixture` = datos de muestra para desarrollo: NUNCA deben publicarse
+   * (`npm run data:assert-live` lo comprueba) ni usarse como respaldo de un snapshot real.
+   */
+  dataSource: z.enum(['api', 'fixture']).default('api'),
   generatedAt: z.string(),
   /** Hash del contenido (sin `generatedAt`): permite saber si el PMS cambió algo entre dos builds. */
   contentHash: z.string(),

@@ -19,6 +19,8 @@ interface Props {
   description?: string | undefined;
   locale?: Locale;
   current?: RouteKey | undefined;
+  /** Enlace a esta misma página en el otro idioma (si difiere de la ruta equivalente por defecto). */
+  alternate?: string | undefined;
   noindex?: boolean;
   /** Datos públicos del hotel para cabecera y pie (vienen del snapshot). */
   hotel: {
@@ -37,6 +39,7 @@ const {
   description,
   locale = siteConfig.defaultLocale,
   current,
+  alternate,
   noindex = false,
   hotel,
   hideStickyCta = false,
@@ -60,7 +63,7 @@ const overrides = themeCss(siteConfig.theme);
     <a class="skip-link" href="#main">
       {t(locale, 'skip.main')}
     </a>
-    <Header locale={locale} hotelName={hotel.name} current={current} />
+    <Header locale={locale} hotelName={hotel.name} current={current} alternateHref={alternate} />
     <main id="main">
       <slot />
     </main>

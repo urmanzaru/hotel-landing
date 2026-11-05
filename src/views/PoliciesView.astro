@@ -1,0 +1,87 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Alert from '../components/Alert.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { paragraphs, pick } from '../lib/content.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const { hotel } = getSnapshot();
+const policies = hotel.politics.map((policy) => ({
+  id: policy.id,
+  anchor: `politica-${policy.id}`,
+  name: pick(policy.name, locale),
+  paragraphs: paragraphs(pick(policy.description, locale)),
+}));
+---
+
+<Page
+  locale={locale}
+  current="policies"
+  label={t(locale, 'policies.title')}
+  description={t(locale, 'policies.lead')}
+  noindex={policies.length === 0}
+>
+  <PageHeader
+    locale={locale}
+    title={t(locale, 'policies.title')}
+    lead={t(locale, 'policies.lead')}
+  />
+  <Section narrow tight>
+    {policies.length === 0 ? (
+      <Alert variant="info">{t(locale, 'policies.empty')}</Alert>
+    ) : (
+      <>
+        {policies.length > 1 && (
+          <nav class="toc" aria-label={t(locale, 'policies.title')}>
+            <ul role="list">
+              {policies.map((policy) => (
+                <li>
+                  <a href={`#${policy.anchor}`}>{policy.name}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+        {policies.map((policy) => (
+          <article id={policy.anchor} class="policy">
+            <h2>{policy.name}</h2>
+            {policy.paragraphs.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+          </article>
+        ))}
+      </>
+    )}
+  </Section>
+</Page>
+
+<style>
+  .toc {
+    margin-bottom: var(--space-7);
+  }
+  .toc ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .toc a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    font-weight: 700;
+  }
+  .policy {
+    display: grid;
+    gap: var(--space-3);
+    margin-bottom: var(--space-7);
+  }
+  .policy p {
+    white-space: pre-line;
+  }
+</style>

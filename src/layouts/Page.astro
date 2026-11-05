@@ -1,0 +1,51 @@
+---
+/**
+ * Layout de las páginas del sitio: obtiene el snapshot y resuelve cabecera, pie, título y robots.
+ * Si el snapshot es de MUESTRA, la página sale con `noindex` (nunca debe indexarse un sitio con datos de ejemplo).
+ */
+import type { Locale } from '../../clients/types.ts';
+import { getSnapshot } from '../data/load.ts';
+import type { RouteKey } from '../lib/routes.ts';
+import { layoutHotel, pageTitle, pick, truncate } from '../lib/content.ts';
+import Base from './Base.astro';
+
+interface Props {
+  locale: Locale;
+  current?: RouteKey | undefined;
+  /** Nombre de la página para el `<title>`; `null` en la portada. */
+  label: string | null;
+  description?: string | undefined;
+  alternate?: string | undefined;
+  hideStickyCta?: boolean;
+  /** Fuerza `noindex` (p. ej. página sin contenido). */
+  noindex?: boolean;
+}
+
+const {
+  locale,
+  current,
+  label,
+  description,
+  alternate,
+  hideStickyCta = false,
+  noindex = false,
+} = Astro.props;
+const snapshot = getSnapshot();
+const fallbackDescription = truncate(
+  pick(snapshot.hotel.description, locale) || pick(snapshot.hotel.category, locale),
+  155,
+);
+---
+
+<Base
+  title={pageTitle(label, snapshot, locale)}
+  description={description ?? (fallbackDescription || undefined)}
+  locale={locale}
+  current={current}
+  alternate={alternate}
+  hotel={layoutHotel(snapshot, locale)}
+  noindex={noindex || snapshot.dataSource === 'fixture'}
+  hideStickyCta={hideStickyCta}
+>
+  <slot />
+</Base>

@@ -21,7 +21,11 @@
     "verify": "npm run check && npm run lint && npm run test && npm run build",
     "api:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-api-contract.ts",
     "images:check": "node --import tsx scripts/check-images.ts",
-    "brand:assets": "node --import tsx scripts/make-brand-assets.ts"
+    "brand:assets": "node --import tsx scripts/make-brand-assets.ts",
+    "predev": "node --import tsx scripts/ensure-snapshot.ts",
+    "prebuild": "node --import tsx scripts/ensure-snapshot.ts",
+    "data:fixture": "node --import tsx scripts/fixture-snapshot.ts",
+    "data:assert-live": "node --import tsx scripts/assert-live-data.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",

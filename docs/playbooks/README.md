@@ -17,8 +17,8 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | 01  | [Scaffold del proyecto](./01-scaffold-proyecto.md)             | Repo Astro + TS con lint/test/build                                   | 00                         | ✅ Completo  |
 | 02  | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md)       | Cliente de API, snapshot, pipeline de imágenes                        | 01                         | 🟡 Falta verificar contra la API real |
 | 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | ✅ Completo  |
-| 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | ⏭ Siguiente    |
-| 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | Pendiente    |
+| 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | 🟡 Falta ver con datos reales    |
+| 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | ⏭ Siguiente    |
 | 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | Pendiente    |
 | 07  | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md)   | Pipeline, publicación y rollback                                      | 01 (esqueleto), 06 (final) | Pendiente    |
 | 08  | [Pruebas y calidad](./08-pruebas-y-calidad.md)                 | Unit, e2e, checklist de release                                       | transversal                | Continuo     |

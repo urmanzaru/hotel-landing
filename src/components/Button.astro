@@ -4,6 +4,9 @@ import type { HTMLAttributes } from 'astro/types';
 type Props = HTMLAttributes<'button'> & {
   /** Con `href` se renderiza un enlace; sin él, un botón. */
   href?: string | undefined;
+  /** Solo para enlaces. */
+  target?: '_blank' | '_self' | undefined;
+  rel?: string | undefined;
   variant?: 'primary' | 'secondary' | 'ghost' | 'light';
   size?: 'md' | 'lg';
 };

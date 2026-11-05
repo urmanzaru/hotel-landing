@@ -1,0 +1,54 @@
+---
+/**
+ * PROVISIONAL: el formulario de cotización se construye en el playbook 05. Mientras tanto la página existe para que
+ * los enlaces «Cotizar» no den 404, ofrece los contactos del hotel y no se indexa.
+ */
+import type { Locale } from '../../clients/types.ts';
+import Alert from '../components/Alert.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { telHref } from '../lib/content.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const { hotel } = getSnapshot();
+---
+
+<Page locale={locale} current="quote" label={t(locale, 'quote.title')} hideStickyCta noindex>
+  <PageHeader locale={locale} title={t(locale, 'quote.title')} lead={t(locale, 'quote.lead')} />
+  <Section narrow tight>
+    <Alert variant="info">{t(locale, 'quote.soon')}</Alert>
+    <ul role="list" class="contacts">
+      {hotel.phones.map((phone) => (
+        <li>
+          <a href={telHref(phone)}>{phone}</a>
+        </li>
+      ))}
+      {hotel.email && (
+        <li>
+          <a href={`mailto:${hotel.email}`}>{hotel.email}</a>
+        </li>
+      )}
+    </ul>
+  </Section>
+</Page>
+
+<style>
+  .contacts {
+    display: grid;
+    gap: var(--space-1);
+    margin-top: var(--space-5);
+  }
+  .contacts a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    font-size: var(--text-lg);
+    font-weight: 700;
+  }
+</style>

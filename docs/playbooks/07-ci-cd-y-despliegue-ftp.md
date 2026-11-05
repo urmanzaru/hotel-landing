@@ -31,6 +31,8 @@ reemplazarlo (puede traer redirecciones o reglas del hosting que hay que mantene
 2. Checkout, Node 22 con caché de npm, `npm ci`.
 3. Restaurar caché del último snapshot e imágenes (`actions/cache`).
 4. `npm run data:fetch` con `PUBLIC_API_URL`, `HOTEL_ID`, `SITE_ORIGIN` → falla si no pasa los umbrales (02).
+   Justo después, **`npm run data:assert-live`**: falla si el snapshot es de MUESTRA (`dataSource: fixture`), para que
+   datos de ejemplo nunca lleguen a producción.
 5. `npm run build` + `check-images.ts`.
 6. **Humo previo al envío**: existen `dist/index.html`, `dist/habitaciones/index.html`, `dist/.htaccess`; el
    HTML contiene el nombre del hotel.

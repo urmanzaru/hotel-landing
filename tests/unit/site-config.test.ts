@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadSiteConfig } from '../../site.config.ts';
+import { loadSiteConfig, normalizeBase } from '../../site.config.ts';
 
 describe('loadSiteConfig', () => {
   it('usa el cliente por defecto y sus valores de desarrollo', () => {
@@ -36,5 +36,22 @@ describe('loadSiteConfig', () => {
     expect(loadSiteConfig({ SITE_ORIGIN: '', HOTEL_ID: '  ' }).hotelId).toBe(
       '5fe1ffca46f0600fec51463d',
     );
+  });
+});
+
+describe('normalizeBase', () => {
+  it('siempre empieza y termina con barra', () => {
+    expect(normalizeBase(undefined)).toBe('/');
+    expect(normalizeBase('')).toBe('/');
+    expect(normalizeBase('/')).toBe('/');
+    expect(normalizeBase('nuevo')).toBe('/nuevo/');
+    expect(normalizeBase('/nuevo')).toBe('/nuevo/');
+    expect(normalizeBase('/nuevo/')).toBe('/nuevo/');
+    expect(normalizeBase(' //a/b// ')).toBe('/a/b/');
+  });
+
+  it('rechaza caracteres que no son de una ruta', () => {
+    expect(() => normalizeBase('/nuevo?x=1')).toThrow(/BASE_PATH/);
+    expect(() => normalizeBase('/a b/')).toThrow(/BASE_PATH/);
   });
 });

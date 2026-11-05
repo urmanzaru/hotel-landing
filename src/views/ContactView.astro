@@ -1,0 +1,126 @@
+---
+import type { Locale } from '../../clients/types.ts';
+import Alert from '../components/Alert.astro';
+import Button from '../components/Button.astro';
+import PageHeader from '../components/PageHeader.astro';
+import Section from '../components/Section.astro';
+import { getSnapshot } from '../data/load.ts';
+import { t } from '../i18n/ui.ts';
+import Page from '../layouts/Page.astro';
+import { addressLine, telHref, whatsappHref } from '../lib/content.ts';
+import { routeUrl } from '../lib/routes.ts';
+import { siteConfig } from '../lib/site.ts';
+
+interface Props {
+  locale: Locale;
+}
+const { locale } = Astro.props;
+const { hotel } = getSnapshot();
+const whatsapp = whatsappHref(siteConfig.contact.whatsapp);
+const address = addressLine(hotel.address);
+const hasContact = hotel.phones.length > 0 || Boolean(hotel.email) || whatsapp !== null;
+---
+
+<Page
+  locale={locale}
+  current="contact"
+  label={t(locale, 'contact.title')}
+  description={t(locale, 'contact.lead')}
+>
+  <PageHeader locale={locale} title={t(locale, 'contact.title')} lead={t(locale, 'contact.lead')} />
+  <Section tight>
+    <div class="grid">
+      {hasContact ? (
+        <div class="block">
+          {hotel.phones.length > 0 && (
+            <div>
+              <h2>{t(locale, 'contact.phones')}</h2>
+              <ul role="list">
+                {hotel.phones.map((phone) => (
+                  <li>
+                    <a href={telHref(phone)}>{phone}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {whatsapp && (
+            <div>
+              <h2>{t(locale, 'contact.whatsapp')}</h2>
+              <p>
+                <a href={whatsapp} rel="noopener noreferrer" target="_blank">
+                  {siteConfig.contact.whatsapp}
+                </a>
+              </p>
+            </div>
+          )}
+          {hotel.email && (
+            <div>
+              <h2>{t(locale, 'contact.email')}</h2>
+              <p>
+                <a href={`mailto:${hotel.email}`}>{hotel.email}</a>
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <Alert variant="info">{t(locale, 'contact.empty')}</Alert>
+      )}
+
+      <div class="block">
+        {address && (
+          <div>
+            <h2>{t(locale, 'location.address')}</h2>
+            <p>{address}</p>
+          </div>
+        )}
+        <div>
+          <h2>{t(locale, 'time.title')}</h2>
+          <p>
+            {t(locale, 'time.checkin')}: <strong>{hotel.checkInTime}</strong>
+            <br />
+            {t(locale, 'time.checkout')}: <strong>{hotel.checkOutTime}</strong>
+          </p>
+        </div>
+        <p>
+          <Button href={routeUrl('quote', locale)} size="lg">
+            {t(locale, 'cta.quote.long')}
+          </Button>
+        </p>
+      </div>
+    </div>
+  </Section>
+</Page>
+
+<style>
+  .grid {
+    display: grid;
+    gap: var(--space-7);
+  }
+  .block {
+    display: grid;
+    gap: var(--space-5);
+    align-content: start;
+  }
+  .block h2 {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-xl);
+  }
+  .block ul {
+    display: grid;
+    gap: var(--space-1);
+  }
+  .block li a,
+  .block p a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-size);
+    font-size: var(--text-lg);
+    font-weight: 700;
+  }
+  @media (min-width: 48rem) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

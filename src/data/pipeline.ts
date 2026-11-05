@@ -10,7 +10,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { SiteConfig } from '../../site.config.ts';
 import type { ApiClient } from './client.ts';
-import { processImages, type ImageFetcher } from './images.ts';
+import { processImages, pruneImages, type ImageFetcher } from './images.ts';
 import { buildSnapshotCore } from './mappers.ts';
 import { snapshotSchema, type BrokenImage, type ImageSource, type Snapshot } from './types.ts';
 
@@ -24,6 +24,8 @@ export interface PipelineOptions {
   /** Salida de imágenes optimizadas (`public/img`). */
   imagesOutDir: string;
   fetchImage?: ImageFetcher;
+  /** `fixture` marca el snapshot como datos de muestra (ver `snapshotSchema`). Por defecto `api`. */
+  dataSource?: 'api' | 'fixture';
   now?: () => Date;
   log?: (message: string) => void;
 }
@@ -57,7 +59,8 @@ async function writeJson(file: string, value: unknown): Promise<void> {
 async function readCachedSnapshot(file: string): Promise<Snapshot | null> {
   try {
     const parsed = snapshotSchema.safeParse(JSON.parse(await readFile(file, 'utf8')));
-    return parsed.success ? parsed.data : null;
+    // Un snapshot de muestra jamás sirve de respaldo de uno real (podría publicarse como si fuera del hotel).
+    return parsed.success && parsed.data.dataSource === 'api' ? parsed.data : null;
   } catch {
     return null;
   }
@@ -84,6 +87,7 @@ async function buildFromApi(options: PipelineOptions): Promise<PipelineResult> {
   };
   const snapshot: Snapshot = {
     schemaVersion: 1,
+    dataSource: options.dataSource ?? 'api',
     generatedAt: (options.now?.() ?? new Date()).toISOString(),
     contentHash: hashContent(content),
     ...content,
@@ -150,5 +154,8 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   }
 
   await writeJson(options.snapshotPath, result.snapshot);
+  const removed = await pruneImages(options.imagesOutDir, Object.keys(result.snapshot.images));
+  if (removed.length > 0)
+    log(`Imágenes huérfanas eliminadas de ${options.imagesOutDir}: ${removed.length}`);
   return result;
 }

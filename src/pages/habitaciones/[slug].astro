@@ -1,0 +1,13 @@
+---
+import { getSnapshot } from '../../data/load.ts';
+import RoomView from '../../views/RoomView.astro';
+
+export function getStaticPaths() {
+  return getSnapshot().roomTypes.map((room) => ({ params: { slug: room.slug } }));
+}
+
+const { slug } = Astro.params;
+if (!slug) throw new Error('Falta el slug de la habitación');
+---
+
+<RoomView locale="es" slug={slug} />

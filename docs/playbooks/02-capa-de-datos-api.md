@@ -38,6 +38,7 @@ de entorno.
 | `scripts/fetch-snapshot.ts`       | `npm run data:fetch`.                                                                                              |
 | `scripts/verify-api-contract.ts`  | `npm run api:verify` (paso 1; solo `GET` y un `OPTIONS`, **nunca `POST`**).                                        |
 | `scripts/check-images.ts`         | `npm run images:check`.                                                                                            |
+| `src/data/fixture.ts` + scripts   | Datos de muestra (`data:fixture`, `ensure-snapshot`) y `data:assert-live`: ver playbook 04.                        |
 | `tests/unit/*`, `tests/fixtures/` | 45 pruebas con fixtures sintéticas (ver `tests/fixtures/README.md`).                                               |
 
 ## Pasos

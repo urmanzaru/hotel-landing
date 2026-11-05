@@ -5,7 +5,8 @@
  * - Una imagen que da 404 o no se puede decodificar NO rompe el build: se reporta y el sitio usa un placeholder.
  * - Genera WebP y un respaldo (JPEG, o PNG si la imagen tiene transparencia) en varios anchos, sin ampliar.
  */
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import type { Dirent } from 'node:fs';
+import { mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
 import type { BrokenImage, ImageAsset, ImageSource } from './types.ts';
@@ -192,4 +193,26 @@ export async function processImages(
     else broken.push(result.broken);
   }
   return { assets, broken };
+}
+
+/**
+ * Borra de `outDir` las carpetas de imágenes que ya no están en el snapshot (imágenes eliminadas del PMS o restos
+ * de datos de muestra), para que no lleguen a `dist/`. Solo toca subcarpetas; ignora archivos sueltos.
+ */
+export async function pruneImages(outDir: string, keepIds: Iterable<string>): Promise<string[]> {
+  const keep = new Set(keepIds);
+  let entries: Dirent[];
+  try {
+    entries = await readdir(outDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+  const removed: string[] = [];
+  for (const entry of entries) {
+    if (entry.isDirectory() && !keep.has(entry.name)) {
+      await rm(path.join(outDir, entry.name), { recursive: true, force: true });
+      removed.push(entry.name);
+    }
+  }
+  return removed;
 }
