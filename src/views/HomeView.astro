@@ -9,9 +9,12 @@ import WaveDivider from '../components/WaveDivider.astro';
 import { getSnapshot } from '../data/load.ts';
 import { t } from '../i18n/ui.ts';
 import Page from '../layouts/Page.astro';
-import { addressLine, pick, roomMeta } from '../lib/content.ts';
+import { addressLine, langFor, pick, roomMeta } from '../lib/content.ts';
 import { heroImage, hotelGallery, roomCover } from '../lib/photos.ts';
 import { roomUrl, routeUrl } from '../lib/routes.ts';
+import { absoluteUrl, hotelJsonLd, serializeJsonLd } from '../lib/seo.ts';
+import { siteConfig } from '../lib/site.ts';
+import { url } from '../lib/url.ts';
 
 interface Props {
   locale: Locale;
@@ -25,15 +28,38 @@ const photos = hotelGallery(snapshot, locale).slice(0, 4);
 const address = addressLine(hotel.address);
 const description = pick(hotel.description, locale);
 const category = pick(hotel.category, locale);
+// Los nombres de imagen del PMS solo existen en español.
+const abs = (path: string) => absoluteUrl(siteConfig.origin, path);
+const hotelData = hotelJsonLd({
+  hotel,
+  locale,
+  url: abs(routeUrl('home', locale)),
+  images: hotelGallery(snapshot, locale)
+    .slice(0, 6)
+    .flatMap((item) => {
+      const widest = item.asset?.variants.at(-1);
+      return widest ? [abs(url(widest.fallback))] : [];
+    }),
+  fallbackTimes: { checkIn: siteConfig.checkInTime, checkOut: siteConfig.checkOutTime },
+});
+const heroAltLang = hero?.name ? (locale === 'es' ? undefined : 'es') : undefined;
 ---
 
 <Page locale={locale} current="home" label={null}>
   <section class="hero" aria-labelledby="hero-title">
     <div class="container hero__grid">
       <div class="hero__text">
-        {category && <p class="eyebrow">{category}</p>}
+        {category && (
+          <p class="eyebrow" lang={langFor(hotel.category, locale)}>
+            {category}
+          </p>
+        )}
         <h1 id="hero-title">{pick(hotel.name, locale)}</h1>
-        {description && <p class="lead">{description}</p>}
+        {description && (
+          <p class="lead" lang={langFor(hotel.description, locale)}>
+            {description}
+          </p>
+        )}
         <div class="hero__actions">
           <Button href={routeUrl('quote', locale)} size="lg">
             {t(locale, 'cta.quote.long')}
@@ -49,6 +75,7 @@ const category = pick(hotel.category, locale);
         <Picture
           asset={hero}
           alt={hero?.name || pick(hotel.name, locale)}
+          lang={heroAltLang}
           ratio="arch"
           priority
           sizes="(min-width: 48rem) 40vw, 80vw"
@@ -73,6 +100,8 @@ const category = pick(hotel.category, locale);
               name={pick(room.name, locale)}
               meta={roomMeta(locale, room)}
               description={pick(room.description, locale) || undefined}
+              nameLang={langFor(room.name, locale)}
+              descriptionLang={langFor(room.description, locale)}
               cta={t(locale, 'rooms.view')}
               asset={roomCover(snapshot, room)}
               headingLevel="h3"
@@ -115,6 +144,7 @@ const category = pick(hotel.category, locale);
       {t(locale, 'cta.quote.long')}
     </Button>
   </Section>
+  <script is:inline type="application/ld+json" set:html={serializeJsonLd(hotelData)} />
 </Page>
 
 <style>

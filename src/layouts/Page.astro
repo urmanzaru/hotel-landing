@@ -5,8 +5,9 @@
  */
 import type { Locale } from '../../clients/types.ts';
 import { getSnapshot } from '../data/load.ts';
-import type { RouteKey } from '../lib/routes.ts';
+import { routeUrl, type RouteKey } from '../lib/routes.ts';
 import { layoutHotel, pageTitle, pick, truncate } from '../lib/content.ts';
+import { OG_IMAGE, ogImagePath } from '../lib/og.ts';
 import Base from './Base.astro';
 
 interface Props {
@@ -15,7 +16,10 @@ interface Props {
   /** Nombre de la página para el `<title>`; `null` en la portada. */
   label: string | null;
   description?: string | undefined;
-  alternate?: string | undefined;
+  /** Rutas de ESTA página por idioma. Por defecto, las de `current` (las vistas de detalle pasan las suyas). */
+  paths?: Record<Locale, string> | undefined;
+  /** Nombre de la imagen para compartir (`/og/<nombre>.jpg`); por defecto la del sitio. */
+  ogImage?: string | undefined;
   hideStickyCta?: boolean;
   /** Fuerza `noindex` (p. ej. página sin contenido). */
   noindex?: boolean;
@@ -26,7 +30,8 @@ const {
   current,
   label,
   description,
-  alternate,
+  paths,
+  ogImage = 'site',
   hideStickyCta = false,
   noindex = false,
 } = Astro.props;
@@ -35,6 +40,9 @@ const fallbackDescription = truncate(
   pick(snapshot.hotel.description, locale) || pick(snapshot.hotel.category, locale),
   155,
 );
+const pagePaths =
+  paths ?? (current ? { es: routeUrl(current, 'es'), en: routeUrl(current, 'en') } : undefined);
+const hotelName = pick(snapshot.hotel.name, locale);
 ---
 
 <Base
@@ -42,7 +50,8 @@ const fallbackDescription = truncate(
   description={description ?? (fallbackDescription || undefined)}
   locale={locale}
   current={current}
-  alternate={alternate}
+  paths={pagePaths}
+  image={{ path: ogImagePath(ogImage), ...OG_IMAGE, alt: label ?? hotelName }}
   hotel={layoutHotel(snapshot, locale)}
   noindex={noindex || snapshot.dataSource === 'fixture'}
   hideStickyCta={hideStickyCta}

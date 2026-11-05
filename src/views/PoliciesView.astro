@@ -6,18 +6,22 @@ import Section from '../components/Section.astro';
 import { getSnapshot } from '../data/load.ts';
 import { t } from '../i18n/ui.ts';
 import Page from '../layouts/Page.astro';
-import { paragraphs, pick } from '../lib/content.ts';
+import { langFor, paragraphs, pick } from '../lib/content.ts';
+import { isIndexable } from '../lib/pages.ts';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const { hotel } = getSnapshot();
+const snapshot = getSnapshot();
+const { hotel } = snapshot;
 const policies = hotel.politics.map((policy) => ({
   id: policy.id,
   anchor: `politica-${policy.id}`,
   name: pick(policy.name, locale),
+  nameLang: langFor(policy.name, locale),
   paragraphs: paragraphs(pick(policy.description, locale)),
+  textLang: langFor(policy.description, locale),
 }));
 ---
 
@@ -26,7 +30,7 @@ const policies = hotel.politics.map((policy) => ({
   current="policies"
   label={t(locale, 'policies.title')}
   description={t(locale, 'policies.lead')}
-  noindex={policies.length === 0}
+  noindex={!isIndexable('policies', snapshot)}
 >
   <PageHeader
     locale={locale}
@@ -43,7 +47,9 @@ const policies = hotel.politics.map((policy) => ({
             <ul role="list">
               {policies.map((policy) => (
                 <li>
-                  <a href={`#${policy.anchor}`}>{policy.name}</a>
+                  <a href={`#${policy.anchor}`} lang={policy.nameLang}>
+                    {policy.name}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -51,9 +57,9 @@ const policies = hotel.politics.map((policy) => ({
         )}
         {policies.map((policy) => (
           <article id={policy.anchor} class="policy">
-            <h2>{policy.name}</h2>
+            <h2 lang={policy.nameLang}>{policy.name}</h2>
             {policy.paragraphs.map((paragraph) => (
-              <p>{paragraph}</p>
+              <p lang={policy.textLang}>{paragraph}</p>
             ))}
           </article>
         ))}

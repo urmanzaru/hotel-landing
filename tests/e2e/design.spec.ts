@@ -212,7 +212,10 @@ test.describe('navegación', () => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(DESIGN);
     await expect(page.locator('a.lang')).toHaveAttribute('href', '/en/');
-    await expect(page.locator('a.lang')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('a.lang')).toHaveAttribute('hreflang', 'en');
+    // Solo el nombre del idioma va marcado como inglés; «Cambiar idioma» está en el idioma de la página.
+    await expect(page.locator('a.lang')).not.toHaveAttribute('lang', /.+/);
+    await expect(page.locator('a.lang [lang="en"]')).toHaveText('English');
   });
 });
 

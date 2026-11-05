@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
 import { loadEnv } from 'vite';
 import { loadSiteConfig, normalizeBase } from './site.config.ts';
 
@@ -26,7 +25,6 @@ export default defineConfig({
     locales: [...siteConfig.locales],
     routing: { prefixDefaultLocale: false },
   },
-  integrations: [sitemap()],
   vite: {
     server: { strictPort: true },
     define: { __SITE_CONFIG__: JSON.stringify(siteConfig) },

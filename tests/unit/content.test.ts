@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addressLine,
+  langFor,
   mapLinks,
   paragraphs,
   pick,
@@ -23,6 +24,15 @@ const room = (over: Partial<PublicRoomType> = {}): PublicRoomType => ({
   photoMainId: null,
   imageIds: [],
   ...over,
+});
+
+describe('langFor', () => {
+  it('marca lang="es" solo cuando la página no está en español y el texto cayó al español', () => {
+    expect(langFor({ es: 'Hola', en: '' }, 'en')).toBe('es');
+    expect(langFor({ es: 'Hola', en: 'Hello' }, 'en')).toBeUndefined();
+    expect(langFor({ es: 'Hola', en: '' }, 'es')).toBeUndefined();
+    expect(langFor({ es: '', en: '' }, 'en')).toBeUndefined();
+  });
 });
 
 describe('pick', () => {

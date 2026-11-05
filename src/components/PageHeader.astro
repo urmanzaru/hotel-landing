@@ -3,6 +3,8 @@
 import type { Locale } from '../../clients/types.ts';
 import { t } from '../i18n/ui.ts';
 import { routeUrl } from '../lib/routes.ts';
+import { absoluteUrl, breadcrumbJsonLd, serializeJsonLd } from '../lib/seo.ts';
+import { siteConfig } from '../lib/site.ts';
 import Breadcrumb from './Breadcrumb.astro';
 import WaveDivider from './WaveDivider.astro';
 
@@ -12,24 +14,35 @@ interface Props {
   lead?: string | undefined;
   /** Tramos intermedios de la ruta, entre «Inicio» y la página actual. */
   trail?: { label: string; href: string }[];
+  /** `lang` del título si es un texto del PMS que cayó al español (`langFor`). */
+  titleLang?: string | undefined;
+  /** Datos estructurados `BreadcrumbList` (no en la 404). */
+  structuredData?: boolean;
 }
 
-const { locale, title, lead, trail = [] } = Astro.props;
-const items = [
+const { locale, title, lead, trail = [], titleLang, structuredData = true } = Astro.props;
+const items: { label: string; href?: string }[] = [
   { label: t(locale, 'nav.home'), href: routeUrl('home', locale) },
   ...trail,
   { label: title },
 ];
+const abs = (path: string) => absoluteUrl(siteConfig.origin, path);
+const breadcrumb = breadcrumbJsonLd(
+  items.map((item) => ({ name: item.label, url: abs(item.href ?? Astro.url.pathname) })),
+);
 ---
 
 <div class="page-head">
   <div class="container">
     <Breadcrumb label={t(locale, 'nav.breadcrumb')} items={items} />
-    <h1>{title}</h1>
+    <h1 lang={titleLang}>{title}</h1>
     {lead && <p class="lead">{lead}</p>}
   </div>
 </div>
 <WaveDivider from="var(--color-cream)" color="var(--color-surface)" />
+{structuredData && (
+  <script is:inline type="application/ld+json" set:html={serializeJsonLd(breadcrumb)} />
+)}
 
 <style>
   .page-head {

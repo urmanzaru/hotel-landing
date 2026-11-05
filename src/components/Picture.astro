@@ -20,6 +20,8 @@ interface Props {
   loading?: 'lazy' | 'eager';
   /** Solo para la imagen principal (LCP). */
   priority?: boolean;
+  /** Idioma del texto alternativo si difiere del de la página (p. ej. nombres del PMS solo en español). */
+  lang?: string | undefined;
   class?: string;
 }
 
@@ -33,6 +35,7 @@ const {
   ratio,
   loading = 'lazy',
   priority = false,
+  lang,
   class: className,
 } = Astro.props;
 
@@ -46,6 +49,7 @@ const imgAttrs = {
   loading: priority ? 'eager' : loading,
   fetchpriority: priority ? 'high' : undefined,
   decoding: 'async',
+  lang,
 } as const;
 ---
 

@@ -9,6 +9,7 @@ export default defineConfig([
     'node_modules/',
     '.cache/',
     'test-results/',
+    '.lighthouseci/',
     'playwright-report/',
     'reports/',
   ]),
@@ -18,6 +19,11 @@ export default defineConfig([
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
     },
+  },
+  {
+    // Configuración CommonJS de Lighthouse CI (lhci la carga con `require`).
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
   {
     // Convención de Astro: el archivo de entorno referencia sus tipos con triple barra.

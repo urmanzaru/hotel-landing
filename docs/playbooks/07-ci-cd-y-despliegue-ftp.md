@@ -22,7 +22,8 @@ reemplazarlo (puede traer redirecciones o reglas del hosting que hay que mantene
 ## Pipeline
 
 ### `ci.yml` — en cada PR y push
-`npm ci` → `check` → `lint` → `test` → `build` (con fixtures, sin API real) → `test:e2e` → `lhci`.
+`npm ci` → `check` → `lint` → `test` → `build` (con fixtures, sin API real) → `test:e2e` → `npm run lhci`
+(configurado en `lighthouserc.cjs`; guarda los informes en `.lighthouseci/` → subirlos como artefacto).
 
 ### `deploy.yml` — `push` a `main`, `schedule` (`0 */6 * * *`), `workflow_dispatch` (con parámetro `target`:
 `staging` | `production`)
@@ -62,7 +63,8 @@ Usar **Environments** de GitHub; `production` con aprobación manual requerida.
   HTML → `no-cache` (revalidar siempre).
 - Cabeceras de seguridad: `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`,
   `Content-Security-Policy` ajustada (`connect-src` = `PUBLIC_API_URL`; `img-src 'self' data:`).
-- Redirecciones 301 del sitio Angular anterior (lista en 06).
+- Redirecciones 301 del sitio Angular anterior: generarlas con `htaccessRedirects(base)` de `src/lib/legacy.ts`
+  (lista y supuestos en 06).
 - Conservar cualquier regla propia del hosting detectada en el `.htaccess` actual.
 
 ## Plan de despliegue por fases

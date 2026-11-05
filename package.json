@@ -25,10 +25,10 @@
     "predev": "node --import tsx scripts/ensure-snapshot.ts",
     "prebuild": "node --import tsx scripts/ensure-snapshot.ts",
     "data:fixture": "node --import tsx scripts/fixture-snapshot.ts",
-    "data:assert-live": "node --import tsx scripts/assert-live-data.ts"
+    "data:assert-live": "node --import tsx scripts/assert-live-data.ts",
+    "lhci": "npm run build && lhci autorun"
   },
   "dependencies": {
-    "@astrojs/sitemap": "3.7.4",
     "@fontsource-variable/fraunces": "5.3.0",
     "@fontsource-variable/karla": "5.3.0",
     "astro": "7.4.5",
@@ -38,6 +38,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.12",
     "@axe-core/playwright": "4.14.0",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.63.0",
     "@types/node": "22.20.5",
     "eslint": "10.14.0",

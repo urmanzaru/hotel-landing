@@ -88,7 +88,12 @@ test.describe('habitaciones: detalle', () => {
         const url = `${ROUTES['rooms']?.[locale]}${room.slug}/`;
         const response = await page.goto(url);
         expect(response?.status(), url).toBe(200);
-        await expect(page.locator('h1'), url).toHaveText(room.name[locale]);
+        // Sin traducción, el nombre cae al español y el <h1> lo declara con lang="es".
+        const translated = room.name[locale] !== '';
+        await expect(page.locator('h1'), url).toHaveText(
+          translated ? room.name[locale] : room.name.es,
+        );
+        if (!translated) await expect(page.locator('h1'), url).toHaveAttribute('lang', 'es');
         await expect(page.locator('html')).toHaveAttribute('lang', locale);
       }
     }

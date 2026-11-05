@@ -8,7 +8,7 @@ import Section from '../components/Section.astro';
 import { getSnapshot } from '../data/load.ts';
 import { t } from '../i18n/ui.ts';
 import Page from '../layouts/Page.astro';
-import { pick, roomMeta } from '../lib/content.ts';
+import { langFor, pick, roomMeta } from '../lib/content.ts';
 import { roomCover } from '../lib/photos.ts';
 import { roomUrl, routeUrl } from '../lib/routes.ts';
 
@@ -37,6 +37,8 @@ const rooms = snapshot.roomTypes;
               name={pick(room.name, locale)}
               meta={roomMeta(locale, room)}
               description={pick(room.description, locale) || undefined}
+              nameLang={langFor(room.name, locale)}
+              descriptionLang={langFor(room.description, locale)}
               cta={t(locale, 'rooms.view')}
               asset={roomCover(snapshot, room)}
               headingLevel="h2"

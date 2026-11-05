@@ -3,6 +3,7 @@ dist/
 node_modules/
 .cache/
 test-results/
+.lighthouseci/
 playwright-report/
 package-lock.json
 docs/brand/

@@ -9,6 +9,7 @@ import {
   selectHotel,
   slugify,
 } from '../../src/data/mappers.ts';
+import { pick } from '../../src/lib/content.ts';
 
 const read = (name: string): unknown =>
   JSON.parse(readFileSync(new URL(`../fixtures/api/${name}.json`, import.meta.url), 'utf8'));
@@ -89,8 +90,9 @@ describe('buildSnapshotCore', () => {
     const { hotel } = core;
     expect(hotel.id).toBe('5fe1ffca46f0600fec51463d');
     expect(hotel.name).toEqual({ es: 'Hotel La Cabaña de Puerto Ángel', en: 'La Cabaña Hotel' });
-    // Sin traducción al inglés → se usa el español.
-    expect(hotel.category.en).toBe('Higiénico, confortable y familiar');
+    // Sin traducción al inglés → `en` queda vacío: `pick()` usa el español y la página lo marca con lang="es".
+    expect(hotel.category.en).toBe('');
+    expect(pick(hotel.category, 'en')).toBe('Higiénico, confortable y familiar');
     expect(hotel.phones).toEqual(['000 000 0001', '000 000 0002', '000 000 0003']);
     expect(hotel.checkOutTime).toBe('12:00');
     // `entryTime` vacío → valor de la configuración del cliente.

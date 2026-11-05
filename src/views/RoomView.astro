@@ -7,9 +7,13 @@ import Section from '../components/Section.astro';
 import { getSnapshot } from '../data/load.ts';
 import { t } from '../i18n/ui.ts';
 import Page from '../layouts/Page.astro';
-import { paragraphs, pick, roomMeta, truncate } from '../lib/content.ts';
-import { roomGallery } from '../lib/photos.ts';
-import { otherLocale, roomUrl, routeUrl } from '../lib/routes.ts';
+import { langFor, paragraphs, pick, roomMeta, toPlainText, truncate } from '../lib/content.ts';
+import { ogImagePath } from '../lib/og.ts';
+import { absoluteUrl, hotelRoomJsonLd, serializeJsonLd } from '../lib/seo.ts';
+import { siteConfig } from '../lib/site.ts';
+import { url } from '../lib/url.ts';
+import { roomCover, roomGallery } from '../lib/photos.ts';
+import { roomUrl, routeUrl } from '../lib/routes.ts';
 
 interface Props {
   locale: Locale;
@@ -23,6 +27,15 @@ if (!room) throw new Error(`No existe la habitación "${slug}" en el snapshot`);
 const name = pick(room.name, locale);
 const description = pick(room.description, locale);
 const photos = roomGallery(snapshot, room, locale);
+const cover = roomCover(snapshot, room);
+const abs = (path: string) => absoluteUrl(siteConfig.origin, path);
+const roomJsonLd = hotelRoomJsonLd({
+  room,
+  locale,
+  url: abs(roomUrl(locale, room.slug)),
+  hotelId: `${abs(routeUrl('home', siteConfig.defaultLocale))}#hotel`,
+  image: cover ? abs(url(ogImagePath(`room-${room.slug}`))) : undefined,
+});
 const quoteHref = `${routeUrl('quote', locale)}?room=${encodeURIComponent(room.slug)}`;
 ---
 
@@ -30,12 +43,17 @@ const quoteHref = `${routeUrl('quote', locale)}?room=${encodeURIComponent(room.s
   locale={locale}
   current="rooms"
   label={name}
-  description={truncate(description || t(locale, 'rooms.lead'), 155)}
-  alternate={roomUrl(otherLocale(locale), room.slug)}
+  description={truncate(
+    [toPlainText(description) || t(locale, 'rooms.lead'), roomMeta(locale, room)].join(' · '),
+    155,
+  )}
+  paths={{ es: roomUrl('es', room.slug), en: roomUrl('en', room.slug) }}
+  ogImage={cover ? `room-${room.slug}` : undefined}
 >
   <PageHeader
     locale={locale}
     title={name}
+    titleLang={langFor(room.name, locale)}
     lead={roomMeta(locale, room)}
     trail={[{ label: t(locale, 'rooms.title'), href: routeUrl('rooms', locale) }]}
   />
@@ -43,7 +61,9 @@ const quoteHref = `${routeUrl('quote', locale)}?room=${encodeURIComponent(room.s
     <div class="detail">
       <div class="detail__text">
         {paragraphs(description).map((paragraph) => (
-          <p class="detail__p">{paragraph}</p>
+          <p class="detail__p" lang={langFor(room.description, locale)}>
+            {paragraph}
+          </p>
         ))}
         <div class="detail__actions">
           <Button href={quoteHref} size="lg">
@@ -62,6 +82,7 @@ const quoteHref = `${routeUrl('quote', locale)}?room=${encodeURIComponent(room.s
       <Gallery locale={locale} label={t(locale, 'rooms.photos', { name })} items={photos} />
     </Section>
   )}
+  <script is:inline type="application/ld+json" set:html={serializeJsonLd(roomJsonLd)} />
 </Page>
 
 <style>

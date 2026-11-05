@@ -11,16 +11,23 @@ import Header from '../components/Header.astro';
 import StickyQuoteBar from '../components/StickyQuoteBar.astro';
 import { t } from '../i18n/ui.ts';
 import { siteConfig } from '../lib/site.ts';
-import type { RouteKey } from '../lib/routes.ts';
+import { otherLocale, type RouteKey } from '../lib/routes.ts';
+import { absoluteUrl, hreflangLinks, OG_LOCALE } from '../lib/seo.ts';
 import { themeCss } from '../lib/theme.ts';
+import { url } from '../lib/url.ts';
 
 interface Props {
   title: string;
   description?: string | undefined;
   locale?: Locale;
   current?: RouteKey | undefined;
-  /** Enlace a esta misma página en el otro idioma (si difiere de la ruta equivalente por defecto). */
-  alternate?: string | undefined;
+  /**
+   * Ruta (con base) de ESTA página en cada idioma: da la URL canónica, los `hreflang` y el enlace de idioma.
+   * Sin ella (p. ej. la 404) no se emiten canónica ni alternativas.
+   */
+  paths?: Record<Locale, string> | undefined;
+  /** Imagen para compartir (Open Graph / Twitter). `path` relativo al sitio, sin base. */
+  image?: { path: string; width: number; height: number; alt: string } | undefined;
   noindex?: boolean;
   /** Datos públicos del hotel para cabecera y pie (vienen del snapshot). */
   hotel: {
@@ -39,12 +46,18 @@ const {
   description,
   locale = siteConfig.defaultLocale,
   current,
-  alternate,
+  paths,
+  image,
   noindex = false,
   hotel,
   hideStickyCta = false,
 } = Astro.props;
 const overrides = themeCss(siteConfig.theme);
+const { origin, defaultLocale } = siteConfig;
+const canonical = paths ? absoluteUrl(origin, paths[locale]) : undefined;
+const alternates = paths ? hreflangLinks(origin, paths, defaultLocale) : [];
+const other = otherLocale(locale);
+const imageUrl = image ? absoluteUrl(origin, url(image.path)) : undefined;
 ---
 
 <!doctype html>
@@ -55,6 +68,37 @@ const overrides = themeCss(siteConfig.theme);
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
     {noindex && <meta name="robots" content="noindex, nofollow" />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    {alternates.map((link) => (
+      <link rel="alternate" hreflang={link.hreflang} href={link.href} />
+    ))}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={hotel.name} />
+    <meta property="og:title" content={title} />
+    {description && <meta property="og:description" content={description} />}
+    {canonical && <meta property="og:url" content={canonical} />}
+    <meta property="og:locale" content={OG_LOCALE[locale]} />
+    {paths && <meta property="og:locale:alternate" content={OG_LOCALE[other]} />}
+    {image && imageUrl && (
+      <>
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:image:width" content={String(image.width)} />
+        <meta property="og:image:height" content={String(image.height)} />
+        <meta property="og:image:alt" content={image.alt} />
+      </>
+    )}
+    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
+    {siteConfig.logoFile && (
+      <>
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href={url(`brand/${siteConfig.logoFile}-icon-32.png`)}
+        />
+        <link rel="apple-touch-icon" href={url(`brand/${siteConfig.logoFile}-icon-180.png`)} />
+      </>
+    )}
     <link rel="preload" href={frauncesUrl} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={karlaUrl} as="font" type="font/woff2" crossorigin />
     {overrides && <style is:inline set:html={overrides} />}
@@ -63,7 +107,12 @@ const overrides = themeCss(siteConfig.theme);
     <a class="skip-link" href="#main">
       {t(locale, 'skip.main')}
     </a>
-    <Header locale={locale} hotelName={hotel.name} current={current} alternateHref={alternate} />
+    <Header
+      locale={locale}
+      hotelName={hotel.name}
+      current={current}
+      alternateHref={paths?.[other]}
+    />
     <main id="main">
       <slot />
     </main>

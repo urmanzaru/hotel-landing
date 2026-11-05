@@ -19,8 +19,8 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | ✅ Completo  |
 | 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | 🟡 Falta ver con datos reales    |
 | 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | 🟡 Falta humo con la API real |
-| 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | ⏭ Siguiente  |
-| 07  | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md)   | Pipeline, publicación y rollback                                      | 01 (esqueleto), 06 (final) | Pendiente    |
+| 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | 🟡 Falta validar con el sitio publicado |
+| 07  | [CI/CD y despliegue por FTP](./07-ci-cd-y-despliegue-ftp.md)   | Pipeline, publicación y rollback                                      | 01 (esqueleto), 06 (final) | ⏭ Siguiente |
 | 08  | [Pruebas y calidad](./08-pruebas-y-calidad.md)                 | Unit, e2e, checklist de release                                       | transversal                | Continuo     |
 | 09  | [Operación y replicación a otros hoteles](./09-operacion-y-nuevos-clientes.md) | Runbooks, pedidos al backend, alta de cliente         | 07                         | Pendiente    |
 

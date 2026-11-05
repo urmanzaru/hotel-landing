@@ -18,6 +18,9 @@ interface Props {
   /** Texto alternativo de la foto (normalmente el nombre del tipo de habitación). */
   alt?: string | undefined;
   headingLevel?: 'h2' | 'h3';
+  /** `lang` del nombre y de la descripción si cayeron al español en una página en otro idioma (`langFor`). */
+  nameLang?: string | undefined;
+  descriptionLang?: string | undefined;
 }
 
 const {
@@ -32,6 +35,8 @@ const {
   height,
   alt,
   headingLevel = 'h3',
+  nameLang,
+  descriptionLang,
 } = Astro.props;
 const Heading = headingLevel;
 ---
@@ -43,15 +48,22 @@ const Heading = headingLevel;
     width={width}
     height={height}
     alt={alt ?? name}
+    lang={alt ? undefined : nameLang}
     ratio="arch"
     sizes="(min-width: 64rem) 30vw, (min-width: 40rem) 45vw, 92vw"
   />
   <div class="room__body">
     <Heading class="room__name">
-      <a href={href}>{name}</a>
+      <a href={href} lang={nameLang}>
+        {name}
+      </a>
     </Heading>
     <p class="room__meta">{meta}</p>
-    {description && <p class="room__desc">{description}</p>}
+    {description && (
+      <p class="room__desc" lang={descriptionLang}>
+        {description}
+      </p>
+    )}
     <p class="room__cta" aria-hidden="true">
       {cta}
       <svg viewBox="0 0 24 24" width="18" height="18" focusable="false">

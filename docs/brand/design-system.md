@@ -87,8 +87,8 @@ Espaciado en base 4 px (`--space-1…10`), contenedor 72 rem, gutter fluido ≥ 
 | `Checkbox` | Casilla de 24 px y etiqueta clicable ≥ 44 px; ayuda en el slot (fuera de la etiqueta, admite enlaces); error y `liveError` como `Field`. |
 | `ErrorSummary` | Resumen enfocable con enlaces a cada campo (el script del formulario lo enfoca tras un envío fallido). |
 | `Alert` | `info`/`success`/`danger`; los errores usan `role="alert"`. |
-| `RoomCard` | Foto en arco, nombre como **único enlace que cubre toda la tarjeta**, ficha y CTA. |
-| `Picture` | `<picture>` WebP + respaldo con `srcset`; imagen suelta; o **placeholder de marca** si la imagen no existe (nunca una imagen rota). |
+| `RoomCard` | Foto en arco, nombre como **único enlace que cubre toda la tarjeta**, ficha y CTA. `nameLang`/`descriptionLang` marcan con `lang` los textos del PMS sin traducción. |
+| `Picture` | `<picture>` WebP + respaldo con `srcset`; imagen suelta; o **placeholder de marca** si la imagen no existe (nunca una imagen rota). `lang` opcional para el texto alternativo. |
 | `Gallery` | Rejilla + visor sobre `<dialog>` nativo (foco atrapado, `Esc`, flechas, retorno de foco). **Sin JS, cada miniatura enlaza a la foto grande.** |
 | `Section`, `Breadcrumb`, `WaveDivider` | Estructura de página, migas, divisor en ola (`from` = fondo anterior, `color` = siguiente). |
 

@@ -60,10 +60,10 @@ const items = NAV_ROUTES.map((key) => ({
     </nav>
 
     <div class="header__actions">
-      <a class="lang" href={switchHref} lang={other} hreflang={other}>
+      <a class="lang" href={switchHref} hreflang={other}>
         <span aria-hidden="true">{other.toUpperCase()}</span>
         <span class="visually-hidden">
-          {t(locale, 'lang.switch')}: {t(locale, `lang.${other}`)}
+          {t(locale, 'lang.switch')}: <span lang={other}>{t(locale, `lang.${other}`)}</span>
         </span>
       </a>
       <Button href={routeUrl('quote', locale)} class="header__cta">

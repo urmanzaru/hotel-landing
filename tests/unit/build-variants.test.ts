@@ -128,6 +128,13 @@ describe('variante: servido desde una subcarpeta (BASE_PATH=/nuevo/)', () => {
     expect([...new Set(missing)]).toEqual([]);
   });
 
+  it('canónica, sitemap y rutas antiguas respetan la base', async () => {
+    expect(await read(outDir, 'habitaciones/index.html')).toContain(
+      '<link rel="canonical" href="http://localhost:4202/nuevo/habitaciones/">',
+    );
+    expect(await read(outDir, 'roomTypes/index.html')).toContain('url=/nuevo/habitaciones/');
+  });
+
   it('el enlace de idioma respeta la base', async () => {
     const html = await read(outDir, 'habitaciones/familiar/index.html');
     expect(html).toMatch(/<a class="lang"[^>]*href="\/nuevo\/en\/rooms\/familiar\/"/);
@@ -202,6 +209,57 @@ describe('variante: hotel sin habitaciones, fotos, políticas ni contacto', () =
         broken.push(`${path.relative(outDir, file)}: ${m[1]}`);
     }
     expect(broken).toEqual([]);
+  });
+});
+
+describe('variante: datos reales (dataSource: api)', () => {
+  let outDir = '';
+  let build_: ReturnType<typeof build>;
+  const ORIGIN = 'https://hotel.example';
+  beforeAll(async () => {
+    const snapshot = JSON.parse(await readFile(fixtureSnapshot, 'utf8')) as Record<string, unknown>;
+    snapshot['dataSource'] = 'api';
+    const livePath = path.join(work, 'live.json');
+    await writeFile(livePath, JSON.stringify(snapshot));
+    build_ = build('live', { SNAPSHOT_PATH: livePath, SITE_ORIGIN: ORIGIN });
+    outDir = build_.outDir;
+  }, TIMEOUT);
+
+  it('el build termina bien y ninguna página pública lleva noindex', async () => {
+    expect(build_.status, build_.output).toBe(0);
+    for (const file of ['index.html', 'habitaciones/index.html', 'en/rooms/familiar/index.html']) {
+      expect(await read(outDir, file), file).not.toContain('noindex');
+    }
+  });
+
+  it('robots.txt apunta al sitemap con el origen de producción', async () => {
+    expect(await read(outDir, 'robots.txt')).toBe(
+      `User-agent: *\nAllow: /\n\nSitemap: ${ORIGIN}/sitemap.xml\n`,
+    );
+  });
+
+  it('sitemap: cada página en los dos idiomas con sus alternativas; sin 404, diseño ni redirecciones', async () => {
+    const xml = await read(outDir, 'sitemap.xml');
+    const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+    expect(locs).toContain(`${ORIGIN}/`);
+    expect(locs).toContain(`${ORIGIN}/en/rooms/familiar/`);
+    expect(locs).toContain(`${ORIGIN}/politicas/`);
+    expect(new Set(locs).size).toBe(locs.length);
+    expect(xml).toContain(
+      `<xhtml:link rel="alternate" hreflang="x-default" href="${ORIGIN}/habitaciones/familiar/"/>`,
+    );
+    expect(xml).not.toMatch(/404|design|roomTypes|contactUS|og\//);
+    // Cada URL del sitemap es una página que existe en la salida.
+    for (const loc of locs) {
+      const rel = (loc ?? '').replace(ORIGIN, '').replace(/^\//, '');
+      expect(existsSync(path.join(outDir, rel, 'index.html')), loc).toBe(true);
+    }
+  });
+
+  it('la canónica usa el origen de producción', async () => {
+    expect(await read(outDir, 'habitaciones/index.html')).toContain(
+      `<link rel="canonical" href="${ORIGIN}/habitaciones/">`,
+    );
   });
 });
 

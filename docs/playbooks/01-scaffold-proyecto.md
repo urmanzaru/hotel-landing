@@ -40,7 +40,7 @@ las usa (02–05), no antes.
 - [x] `engines.node >=22.23.4` y `.nvmrc` con `22`.
 - [x] `astro.config.ts`: `site` desde `SITE_ORIGIN`, `trailingSlash: 'always'`, `build.format: 'directory'`,
       i18n `es` por defecto sin prefijo y `en`, sitemap, **puerto tomado de `SITE_ORIGIN` y estricto**.
-- [x] Dependencias con versión exacta: `astro`, `@astrojs/sitemap`, `zod`; desarrollo: `typescript`,
+- [x] Dependencias con versión exacta: `astro`, `@astrojs/sitemap` (retirado en 06: sitemap propio), `zod`; desarrollo: `typescript`,
       `@astrojs/check`, `eslint`, `typescript-eslint`, `eslint-plugin-astro`, `prettier`,
       `prettier-plugin-astro`, `vitest`, `@playwright/test`, `tsx`.
 - [x] `clients/lacabana.config.ts` con los valores de desarrollo (API de dev, origen `http://localhost:4202`).

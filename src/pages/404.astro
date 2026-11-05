@@ -10,7 +10,12 @@ import { routeUrl } from '../lib/routes.ts';
 ---
 
 <Page locale="es" label={t('es', 'notfound.title')} noindex>
-  <PageHeader locale="es" title={t('es', 'notfound.title')} lead={t('es', 'notfound.text')} />
+  <PageHeader
+    structuredData={false}
+    locale="es"
+    title={t('es', 'notfound.title')}
+    lead={t('es', 'notfound.text')}
+  />
   <Section narrow tight>
     <Alert variant="info" title="English">
       <span lang="en">

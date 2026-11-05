@@ -7,6 +7,14 @@ export function pick(value: Localized, locale: Locale): string {
   return value[locale] || value.es;
 }
 
+/**
+ * `lang` de un texto del PMS: `'es'` si la página está en otro idioma y el texto cayó al español (no hay traducción);
+ * `undefined` si ya está en el idioma de la página.
+ */
+export function langFor(value: Localized, locale: Locale): Locale | undefined {
+  return locale !== 'es' && !value[locale] && value.es ? 'es' : undefined;
+}
+
 /** «Calle, colonia, ciudad, estado, CP, país» sin partes vacías ni repetidas. */
 export function addressLine(address: PublicHotel['address']): string {
   const parts = [

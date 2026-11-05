@@ -49,11 +49,15 @@ export class Collector {
     return id;
   }
 
+  /**
+   * Sin traducción, `en` queda vacío (no se copia el español): `pick()` hace el respaldo y la página puede marcar el
+   * fragmento con `lang="es"` (`langFor`), como pide WCAG 3.1.2.
+   */
   localized(es: string, en: string): Localized {
     const spanish = es.trim();
     const english = en.trim();
     if (!english && spanish) this.englishFallbacks += 1;
-    return { es: spanish, en: english || spanish };
+    return { es: spanish, en: english };
   }
 }
 

@@ -17,6 +17,7 @@ tests/fixtures/recorded/
 
 # pruebas
 test-results/
+.lighthouseci/
 playwright-report/
 coverage/
 
