@@ -30,7 +30,8 @@
     "data:assert-live": "node --import tsx scripts/assert-live-data.ts",
     "lhci": "npm run build && lhci autorun",
     "deploy:check": "node --import tsx scripts/check-dist.ts",
-    "deploy:verify": "node --import tsx scripts/verify-deploy.ts"
+    "deploy:verify": "node --import tsx scripts/verify-deploy.ts",
+    "dist:privacy": "node --import tsx scripts/check-private-data.ts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "5.3.0",

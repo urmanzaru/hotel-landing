@@ -18,6 +18,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from '@playwright/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { getSnapshot } from '../../src/data/load.ts';
+import { verifyDeployment } from '../../src/lib/deploy-checks.ts';
 
 const root = process.cwd();
 const APACHE = ['/usr/sbin/apache2', '/usr/sbin/httpd'].find((bin) => existsSync(bin));
@@ -240,6 +242,20 @@ TypesConfig /etc/mime.types
       }
     });
 
+    it('ningún .htaccess se puede descargar, aunque el servidor no traiga la regla `.ht*`', async () => {
+      // Este httpd.conf mínimo NO incluye el `<FilesMatch "^\.ht">` habitual: la protección es del generado.
+      for (const file of [
+        '/.htaccess',
+        '/nuevo/.htaccess',
+        '/_astro/.htaccess',
+        '/img/.htaccess',
+      ]) {
+        const reply = await get(file);
+        expect(reply.status, file).toBe(403);
+        expect(reply.body, file).not.toContain('RewriteEngine');
+      }
+    });
+
     it('404 con la página propia y sin listado de carpetas', async () => {
       const missing = await get('/no-existe/');
       expect(missing.status).toBe(404);
@@ -290,6 +306,24 @@ TypesConfig /etc/mime.types
       const missing = await get('/nuevo/no-existe/');
       expect(missing.status).toBe(404);
       expect(missing.body).toContain('No encontramos esa página');
+    });
+
+    it('deploy:verify pasa sin errores ni avisos (todas las rutas antiguas, imagen, CSP, caché)', async () => {
+      // El mismo chequeo que corre tras cada despliegue, con las peticiones dirigidas a este Apache.
+      const viaApache = async (url: string) => {
+        const target = new URL(url);
+        const reply = await get(`${target.pathname}${target.search}`, { Host: target.host });
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(reply.headers)) {
+          for (const item of [value ?? ''].flat()) headers.append(key, item);
+        }
+        return new Response(new Uint8Array(reply.raw), { status: reply.status, headers });
+      };
+      const result = await verifyDeployment(`https://${HOST}/nuevo/`, {
+        hotelName: getSnapshot().hotel.name.es,
+        fetch: viaApache,
+      });
+      expect(result).toEqual({ errors: [], warnings: [] });
     });
   });
 

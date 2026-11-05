@@ -46,6 +46,8 @@ jobs:
         run: npm run build
       - name: Imágenes referenciadas existen
         run: npm run images:check
+      - name: Sin datos fiscales en dist/
+        run: npm run dist:privacy
 
       - name: Navegador de Playwright
         run: npx playwright install --with-deps chromium

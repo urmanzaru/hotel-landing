@@ -10,7 +10,7 @@ Sitio estático (Astro + TypeScript) alimentado por la API del PMS. El plan est�
 - Verificación completa antes de cada commit: `npm run verify` (tipos + lint + pruebas + build). Si tocas el
   `.htaccess` (`src/lib/htaccess.ts`), además `npm run test:apache` (Apache real; `apt-get install apache2`).
 - Nunca hacer `POST /receiveCotization` contra la API real desde pruebas automáticas (crea registros en el PMS).
-- Los datos fiscales del hotel (RFC, razón social…) no deben llegar a `dist/` ni al snapshot.
+- Los datos fiscales del hotel (RFC, razón social…) no deben llegar a `dist/` ni al snapshot (`npm run dist:privacy`).
 - Los enlaces internos se construyen con `import.meta.env.BASE_URL` (el staging va en una subcarpeta).
 - **Datos de muestra**: sin `src/data/snapshot.json`, `dev` y `build` generan uno de MUESTRA (`dataSource: "fixture"`,
   con `noindex`). Nunca se despliega: `npm run data:assert-live` lo impide. Datos reales: `npm run data:fetch`.

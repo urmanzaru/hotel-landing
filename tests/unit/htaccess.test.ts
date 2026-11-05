@@ -102,8 +102,15 @@ describe('buildHtaccess', () => {
     expect(out).toContain('RewriteCond %{HTTP_HOST} !^www\\.hotel\\.example$ [NC]');
     // Con un origen http (sin certificado) no se fuerza nada.
     expect(buildHtaccess({ ...base, origin: 'http://localhost:4202' })).not.toContain(
-      'RewriteRule',
+      'RewriteRule ^ https',
     );
+  });
+
+  it('el propio .htaccess (y cualquier .ht*) no se puede descargar aunque el hosting no lo proteja', () => {
+    // Con mod_rewrite, que ya hace falta (no exige otro AllowOverride: un `Require` podría dar 500).
+    for (const variant of [out, buildHtaccess({ ...base, origin: 'http://localhost:4202' })]) {
+      expect(variant).toContain('RewriteRule (^|/)\\.ht - [F,L]');
+    }
   });
 
   it('redirige las rutas del sitio anterior con 301', () => {

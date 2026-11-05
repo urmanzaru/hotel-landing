@@ -221,6 +221,27 @@ test.describe('envío', () => {
   });
 });
 
+// Prueba imprescindible 1 del playbook 08, del lado del navegador: el huésped puede estar en cualquier zona; el
+// mínimo es «hoy» en la zona del hotel y lo que se envía es el día elegido, sin desplazarlo.
+for (const timezoneId of ['Pacific/Kiritimati', 'Pacific/Pago_Pago']) {
+  test.describe(`navegador en ${timezoneId}`, () => {
+    test.use({ timezoneId });
+
+    test('mínimo = hoy en el hotel; envía y muestra el día elegido', async ({ page }) => {
+      const bodies = await mockApi(page);
+      await open(page);
+      // NOW = 5 nov 12:00 en el hotel; en Kiritimati ya es 6 nov y en Pago Pago, 5 nov 07:00.
+      await expect(page.getByLabel('Llegada')).toHaveAttribute('min', '2026-11-05');
+      await fillValid(page);
+      await submit(page);
+      await expect(page.locator('[data-quote-success]')).toContainText('20 de noviembre de 2026');
+      expect(bodies).toMatchObject([
+        { checkin: '2026-11-20T00:00:00.000Z', checkout: '2026-11-23T00:00:00.000Z' },
+      ]);
+    });
+  });
+}
+
 test.describe('anti-spam', () => {
   test('señuelo relleno: finge el éxito y no envía nada', async ({ page }) => {
     const bodies = await mockApi(page);

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { quoteMessages } from '../../src/i18n/ui.ts';
 import {
   addDays,
@@ -41,8 +41,7 @@ const codes = (value: QuoteInput, today = TODAY) =>
   validateQuote(value, { today }).map((error) => `${error.field}:${error.code}`);
 
 describe('fechas ISO sin desplazamiento de zona', () => {
-  it('toApiDate construye medianoche UTC desde la cadena, en cualquier TZ del proceso', () => {
-    // Se ejecuta también con TZ=Pacific/Kiritimati y TZ=America/Mexico_City (criterio del playbook 05).
+  it('toApiDate construye medianoche UTC desde la cadena', () => {
     expect(toApiDate('2026-11-20')).toBe('2026-11-20T00:00:00.000Z');
     expect(toApiDate('2026-01-01')).toBe('2026-01-01T00:00:00.000Z');
     expect(toApiDate('2028-02-29')).toBe('2028-02-29T00:00:00.000Z');
@@ -88,6 +87,49 @@ describe('fechas ISO sin desplazamiento de zona', () => {
     expect(formatDate('2026-11-20', 'es')).toBe('20 de noviembre de 2026');
     expect(formatDate('2026-11-20', 'en')).toBe('November 20, 2026');
   });
+});
+
+/**
+ * Prueba imprescindible 1 del playbook 08: las fechas no se desplazan sea cual sea la zona del proceso. Node aplica
+ * un cambio de `process.env.TZ` en caliente, así que cada caso corre de verdad en esa zona (el primer `expect` lo
+ * comprueba). Kiritimati (UTC+14) y Pago Pago (UTC−11) son los extremos: un `new Date(y, m, d)` o un
+ * `toISOString()` sobre la hora local cambia de día en uno u otro.
+ */
+describe('fechas en cualquier zona horaria del proceso', () => {
+  const ZONES = [
+    { zone: 'UTC', offset: 0 },
+    { zone: 'America/Mexico_City', offset: 360 },
+    { zone: 'Pacific/Kiritimati', offset: -840 },
+    { zone: 'Pacific/Pago_Pago', offset: 660 },
+  ];
+  const original = process.env['TZ'];
+  afterEach(() => {
+    if (original === undefined) delete process.env['TZ'];
+    else process.env['TZ'] = original;
+  });
+
+  for (const { zone, offset } of ZONES) {
+    it(`TZ=${zone}: el payload y los cálculos de fechas no cambian de día`, () => {
+      process.env['TZ'] = zone;
+      expect(new Date('2026-11-20T12:00:00Z').getTimezoneOffset(), 'la zona se aplicó').toBe(
+        offset,
+      );
+
+      const payload = buildQuotePayload(input({ checkin: '2026-12-31', checkout: '2027-01-02' }), {
+        locale: 'es',
+      });
+      expect(payload.checkin).toBe('2026-12-31T00:00:00.000Z');
+      expect(payload.checkout).toBe('2027-01-02T00:00:00.000Z');
+      expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+      expect(addDays('2026-03-08', 1)).toBe('2026-03-09'); // cambio de horario en EE. UU.
+      expect(addDays('2026-11-01', 1)).toBe('2026-11-02');
+      expect(nightsBetween('2026-12-31', '2027-01-02')).toBe(2);
+      expect(nightsBetween('2026-03-07', '2026-03-09')).toBe(2);
+      expect(formatDate('2026-12-31', 'es')).toBe('31 de diciembre de 2026');
+      expect(todayIn('America/Mexico_City', new Date('2026-11-06T03:00:00Z'))).toBe('2026-11-05');
+      expect(codes(input({ checkin: TODAY, checkout: addDays(TODAY, 1) }))).toEqual([]);
+    });
+  }
 });
 
 describe('validateQuote', () => {

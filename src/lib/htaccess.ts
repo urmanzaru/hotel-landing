@@ -95,6 +95,17 @@ export function buildHtaccess(options: HtaccessOptions): string {
     ),
   );
 
+  sections.push(
+    [
+      '# Los .ht* no se sirven aunque el hosting no lo impida (lo comprueba deploy:verify). Con mod_rewrite y no con',
+      '# `Require`, que exigiría otro AllowOverride y podría dar 500 en todo el sitio.',
+      '<IfModule mod_rewrite.c>',
+      '  RewriteEngine On',
+      '  RewriteRule (^|/)\\.ht - [F,L]',
+      '</IfModule>',
+    ].join('\n'),
+  );
+
   if (forceHttps) {
     sections.push(
       [

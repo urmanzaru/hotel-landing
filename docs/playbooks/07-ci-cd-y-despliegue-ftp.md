@@ -56,13 +56,15 @@ ejecución (rollback rápido). Lo que sigue es el camino normal:
 5. `npm run build` + `check-images.ts`.
 6. **Humo previo al envío** (`npm run deploy:check`): existen portada, habitaciones, cotización, 404, `_astro/` y
    `.htaccess`; la portada tiene el nombre del hotel; **`noindex` solo en staging** (en producción, si la portada lo
-   lleva, no se sube) y el `.htaccess` coincide con ese modo.
+   lleva, no se sube), el `.htaccess` coincide con ese modo y **ningún archivo de texto lleva datos fiscales**
+   (RFC, razón social, régimen; lo mismo que `npm run dist:privacy` en CI, añadido en 08).
 7. Subir por FTP con `SamKirkland/FTP-Deploy-Action` (versión fija): `local-dir: dist/`, `server-dir` del
    entorno, `protocol: ftps` si el hosting lo permite, `state-name` propio por entorno (sube solo lo que cambió),
    `exclude: **/.well-known/**, **/cgi-bin/**`, **sin** `dangerous-clean-slate`.
 8. **Verificación posterior** (`npm run deploy:verify -- $SITE_URL`, 3 intentos): la portada responde 200 con el
    nombre del hotel, una imagen del PMS responde 200 y el `.htaccess` no se puede descargar (errores); avisa si el
-   hosting no aplica la CSP, la caché o la redirección de `/roomTypes`. Si falla → el job falla (ver rollback).
+   hosting no aplica la CSP, la caché o el 301 de **cada** ruta del sitio anterior (lista en `src/lib/legacy.ts`;
+   ampliado en 08). Si falla → el job falla (ver rollback).
 9. Guardar `dist/` como artefacto del job (retención 14 días) para poder redistribuir una versión anterior.
 
 ### Secretos y variables
@@ -83,6 +85,9 @@ Usar **Environments** de GitHub; `production` con aprobación manual requerida.
 - Forzar HTTPS y un solo host canónico (el de `SITE_ORIGIN`), **excepto `.well-known/`** (validación del certificado
   por http). Solo si `SITE_ORIGIN` es `https:`.
 - `Options -Indexes`; `DirectoryIndex index.html`; `ErrorDocument 404 /404.html`.
+- Los `.ht*` responden 403 por una regla propia (`RewriteRule (^|/)\.ht - [F,L]`), sin depender de que el hosting
+  traiga la suya (hallazgo de 08 en Apache real). Con `mod_rewrite` y no con `Require`, que exigiría otro
+  `AllowOverride` y podría dar 500.
 - Compresión (`mod_deflate`) y caché: `_astro/` → un año `immutable` (nombres con hash); `img/` → una semana (las
   fotos del PMS conservan el id aunque cambien); el resto → un día; HTML → `no-cache` (revalidar siempre). Lo de las
   carpetas va en un `.htaccess` propio dentro de cada una.

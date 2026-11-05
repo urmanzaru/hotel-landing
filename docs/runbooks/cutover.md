@@ -55,9 +55,9 @@ Las credenciales solo van como secretos: nunca en el repositorio, en `.env` vers
    build). **No** copiar la regla de Angular que reescribe todo a `index.html`.
 3. *Run workflow* con `target = production` y aprobar. El job:
    - descarga datos reales y se niega a publicar datos de muestra (`data:assert-live`);
-   - comprueba `dist/` (sin `noindex`, `.htaccess` correcto) antes de subir;
+   - comprueba `dist/` (sin `noindex`, `.htaccess` correcto, sin datos fiscales) antes de subir;
    - sube solo lo nuevo, **sin borrar** `.well-known/`, `cgi-bin/` ni los archivos de Angular;
-   - verifica la portada, una imagen, la redirección de `/roomTypes` y que el `.htaccess` no se pueda descargar.
+   - verifica la portada, una imagen, el 301 de cada ruta antigua y que el `.htaccess` no se pueda descargar.
 4. Verificación manual:
    ```bash
    curl -sI https://<dominio>/ | grep -iE "^(HTTP|content-security|cache-control|x-content-type)"
