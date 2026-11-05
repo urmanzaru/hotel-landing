@@ -72,3 +72,4 @@ jobs:
             .lighthouseci/
           retention-days: 14
           if-no-files-found: ignore
+          include-hidden-files: true # .lighthouseci/ es una carpeta oculta
