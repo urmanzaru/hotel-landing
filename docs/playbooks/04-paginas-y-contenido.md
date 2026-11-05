@@ -33,7 +33,7 @@ Al ejecutar `npm run data:fetch` con la API real, el snapshot se reemplaza y las
 | `/galeria/` | `/en/gallery/` | Fotos del hotel y las habitaciones, con visor y créditos | `GalleryView` |
 | `/ubicacion/` | `/en/location/` | Dirección, enlaces a mapas, horarios | `LocationView` |
 | `/contacto/` | `/en/contact/` | Teléfonos, WhatsApp (si hay), correo, horarios | `ContactView` |
-| `/cotizar/` | `/en/quote/` | **Provisional** (formulario en el playbook 05): contactos, sin barra fija, `noindex` | `QuoteView` |
+| `/cotizar/` | `/en/quote/` | Formulario de cotización (playbook 05), sin barra fija | `QuoteView` |
 | `/politicas/` | `/en/policies/` | Una sección por política activa | `PoliciesView` |
 | `/404.html` | — | Bilingüe, con salidas útiles | `pages/404.astro` |
 
@@ -89,6 +89,5 @@ npm run test:e2e      # 82 pruebas contra el sitio construido
 ## Riesgos y pendientes
 
 - **Datos reales**: lo desconocido es el contenido real del PMS. Si algo rompe, los esquemas fallan en el build.
-- **La cotización es provisional**: hasta el playbook 05, «Cotizar» lleva a una página con los contactos.
-- **El sitemap incluye páginas `noindex`** (cotización provisional, políticas vacías): se filtra en el playbook 06.
+- **El sitemap incluye páginas `noindex`** (políticas vacías): se filtra en el playbook 06.
 - **Metadatos SEO completos** (canonical, `hreflang`, Open Graph, JSON-LD): playbook 06.

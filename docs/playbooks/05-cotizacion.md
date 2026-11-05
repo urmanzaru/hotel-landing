@@ -1,5 +1,8 @@
 # 05 — Cotización
 
+> **Estado: 🟡 construido y probado con la API simulada; falta el humo manual contra la API real** (un envío
+> `PRUEBA …` desde un equipo con acceso, ver *Pruebas*). Turnstile está implementado pero sin probar (no hay clave).
+
 **Objetivo:** formulario de solicitud de cotización que envía `POST /receiveCotization` directamente desde el
 navegador, con validación estricta en el cliente (la API no valida) y alternativas si el envío falla.
 
@@ -41,25 +44,46 @@ Respuesta: `{ "status": "Success", "message": { id, ... } }`. Éxito = HTTP 200 
 
 ## Pasos
 
-- [ ] **Marcado sin JS**: `<form>` con campos nativos (`type="date"`, `type="email"`, `required`, `autocomplete`).
-      Sin JS no puede enviar a la API (CORS/JSON), por lo que el `<noscript>` muestra teléfono, WhatsApp y correo.
-- [ ] **`src/islands/quote-form.ts`** (TypeScript vanilla, cargado solo en `/cotizar/`):
-      - Niños dinámicos: campo de edad por niño.
+- [x] **Marcado sin JS**: `<form>` con campos nativos (`type="date"`, `type="email"`, `required`, `autocomplete`).
+      Sin JS no puede enviar a la API (CORS/JSON): el botón sale **deshabilitado** en el HTML (la isla lo activa) y el
+      `<noscript>` muestra teléfono, WhatsApp y correo. Los mismos contactos están siempre en el lateral.
+- [x] **`src/islands/quote-form.ts`** (TypeScript vanilla, cargado solo en `/cotizar/` y `/en/quote/`; **4,3 KB gzip**):
+      - Niños dinámicos: un selector de edad por niño (se clonan desde un `<template>` renderizado con `Field`).
       - Validación al salir del campo y al enviar; errores en línea con `aria-describedby`, `aria-invalid`,
-        resumen de errores enfocado al fallar.
-      - Construcción del payload en una función **pura** `buildQuotePayload(form)` (fácil de probar).
-      - `fetch` con `AbortController` (timeout 15 s), sin reintento automático (el endpoint no es idempotente
-        y duplicaría registros).
-      - Botón deshabilitado y `aria-busy` durante el envío (anti doble clic).
-- [ ] **Estados**: éxito (mensaje "Solicitud enviada", resumen, qué sigue, y se limpia el formulario),
-      error de validación, error de red/timeout/5xx ("No pudimos enviarla" + conservar los datos + botones de
-      WhatsApp/correo/teléfono precargados con el resumen), 403 (mensaje genérico; registrar en consola el motivo).
-- [ ] **Anti-spam** (la API no limita): campo señuelo (*honeypot*) oculto, tiempo mínimo desde la carga
-      (≥ 3 s), y bandera para activar Cloudflare Turnstile por cliente si el spam se vuelve un problema.
-- [ ] **Privacidad**: casilla de aceptación con enlace a `/politicas/`; texto que explica el uso de los datos.
-- [ ] **Precarga**: `?room=<slug>` y fechas por query (`?checkin=&checkout=`), validadas antes de usarse.
-- [ ] **Sin cookies ni analítica** de terceros en el formulario.
-- [ ] i18n completa (etiquetas, errores, mensajes) y formato de fecha local.
+        resumen de errores enfocado al fallar (cada enlace lleva al campo).
+      - Lógica pura en `src/lib/quote.ts`: `validateQuote`, `buildQuotePayload(input, ctx)`, `parsePrefill`,
+        `classifyResponse`, resumen. La isla solo lee el DOM y pinta estados.
+      - `fetch` con `AbortController` (timeout 15 s), sin reintento automático.
+      - Botón deshabilitado, `aria-busy` y texto «Enviando…» durante el envío (anti doble clic).
+- [x] **Estados**: éxito (mensaje, resumen en `<dl>`, qué sigue; el formulario se limpia y se oculta, con «Hacer otra
+      solicitud»), error de validación, error de red/timeout/5xx/200 sin `Success` («No pudimos enviar tu solicitud»,
+      datos conservados, botones de WhatsApp/correo **precargados con el resumen** y de llamada), 403 (mismo mensaje
+      genérico; el motivo va a la consola).
+- [x] **Anti-spam**: campo señuelo `website` (fuera de pantalla, `tabindex="-1"`, `aria-hidden`) y tiempo mínimo de
+      3 s desde la carga. Si saltan, **se finge el éxito y no se envía nada**. Turnstile por cliente:
+      `clients/<slug>.config.ts → quote.turnstileSiteKey` (carga el script de Cloudflare y exige completarlo; el token
+      NO se envía porque la API no lo verifica → solo frena bots que usan el navegador; ver 09).
+- [x] **Privacidad**: casilla obligatoria (`Checkbox`) con texto de uso de datos y enlace a `/politicas/`.
+- [x] **Precarga**: `?room=<slug>` (solo slugs existentes) y `?checkin=&checkout=` (fechas reales, desde hoy y
+      coherentes); lo inválido se ignora.
+- [x] **Sin cookies ni analítica** de terceros (Turnstile solo si se activa).
+- [x] i18n completa (`quote.*` en `src/i18n/ui.ts`; a la isla solo llegan los textos del idioma de la página) y fechas
+      del resumen con `Intl` en el idioma.
+
+### Decisiones tomadas al construir
+
+- **Selector «Habitación de interés»** (opcional) en vez de solo `?room=`: se precarga desde la URL y permite elegir
+  sin venir de una ficha. Los comentarios llevan delante `Habitación de interés: <nombre en español>` y, si la página
+  está en inglés, `Idioma del huésped: inglés` (lo lee el personal del hotel en el PMS).
+- **Campos opcionales vacíos se envían como `""`** (forma estable del registro).
+- **Hoy = zona del hotel** (`timeZone` del cliente); `min` de las fechas se fija en el navegador y la salida propone
+  una noche al elegir la llegada.
+- La página de cotización **ya no es `noindex`** (salvo con datos de muestra, como todas).
+- Arreglos en componentes base: `Button` ignoraba `type="submit"` (siempre `button`); `Field` y `Checkbox` aceptan
+  `liveError` (contenedor de error siempre presente para que el script lo rellene); `ErrorSummary` estiliza la lista
+  creada por script.
+- Bug encontrado por la prueba de teclado: al teclear el año, Chromium emite fechas como `0002-11-20` y `Date.UTC`
+  convierte los años 0–99 en 19xx. `src/lib/quote.ts` usa `setUTCFullYear` y la isla solo actúa con fechas válidas.
 
 ## Pruebas
 
@@ -75,15 +99,21 @@ Respuesta: `{ "status": "Success", "message": { id, ... } }`. Éxito = HTTP 200 
 ## Criterios de aceptación
 
 ```bash
-npm test -- quote            # payload y validación
-npm run test:e2e -- tests/e2e/quote.spec.ts
+npm test -- quote            # payload y validación (28 pruebas)
+npm run test:e2e -- tests/e2e/quote.spec.ts   # 20 pruebas con la API simulada
 TZ=Pacific/Kiritimati npm test -- quote   # y con TZ=America/Mexico_City: mismas fechas
 ```
 
-- JS de la página de cotización ≤ 15 KB gzip; el resto de las páginas, 0 KB propio salvo menú/lightbox.
-- Un envío exitoso muestra confirmación en < 2 s con red normal.
-- Si la API cae, el huésped nunca pierde lo escrito y tiene un canal alterno visible.
-- Axe sin violaciones; todo el flujo se completa solo con teclado.
+- [x] Las pruebas pasan en `TZ=Pacific/Kiritimati`, `America/Mexico_City` y `Pacific/Pago_Pago`. Comprobado que la
+      prueba de fechas **falla** con la conversión ingenua (`new Date(...).toISOString()`), y que las e2e de señuelo,
+      timeout y doble clic fallan si se quita su protección.
+- [x] JS de la página de cotización **4,3 KB gzip** (≤ 15 KB); el resto de las páginas no la carga.
+- [ ] Un envío exitoso muestra confirmación en < 2 s con red normal (depende de la API real: humo manual).
+- [x] Si la API cae, el huésped nunca pierde lo escrito y tiene un canal alterno visible.
+- [x] Axe sin violaciones (inicial, con errores, con fallo y con éxito); todo el flujo se completa solo con teclado.
+
+La e2e simula la API y además **aborta y hace fallar** cualquier petición a `receiveCotization` que la prueba no haya
+simulado. El reloj se controla con `page.clock` (hoy = 5-nov-2026 en la zona del hotel).
 
 ## Riesgos
 

@@ -1,54 +1,498 @@
 ---
 /**
- * PROVISIONAL: el formulario de cotización se construye en el playbook 05. Mientras tanto la página existe para que
- * los enlaces «Cotizar» no den 404, ofrece los contactos del hotel y no se indexa.
+ * Formulario de cotización (playbook 05). El HTML es un `<form>` nativo; la isla `quote-form.ts` (solo en esta página)
+ * valida, envía `POST /receiveCotization` desde el navegador y muestra los estados. Sin JavaScript no se puede
+ * enviar (la API necesita JSON y CORS): el botón queda deshabilitado y el `<noscript>` ofrece teléfono, WhatsApp y
+ * correo. La lógica pura vive en `src/lib/quote.ts`.
  */
 import type { Locale } from '../../clients/types.ts';
 import Alert from '../components/Alert.astro';
+import Button from '../components/Button.astro';
+import Checkbox from '../components/Checkbox.astro';
+import ErrorSummary from '../components/ErrorSummary.astro';
+import Field from '../components/Field.astro';
 import PageHeader from '../components/PageHeader.astro';
 import Section from '../components/Section.astro';
 import { getSnapshot } from '../data/load.ts';
-import { t } from '../i18n/ui.ts';
+import { quoteMessages, t } from '../i18n/ui.ts';
 import Page from '../layouts/Page.astro';
-import { telHref } from '../lib/content.ts';
+import { pick, telHref, whatsappHref } from '../lib/content.ts';
+import { QUOTE_LIMITS } from '../lib/quote.ts';
+import { routeUrl } from '../lib/routes.ts';
+import { siteConfig } from '../lib/site.ts';
 
 interface Props {
   locale: Locale;
 }
 const { locale } = Astro.props;
-const { hotel } = getSnapshot();
+const { hotel, roomTypes } = getSnapshot();
+const hotelName = pick(hotel.name, locale);
+const whatsapp = whatsappHref(siteConfig.contact.whatsapp);
+const turnstileSiteKey = siteConfig.quote?.turnstileSiteKey;
+/** Canales alternos: se muestran en el lateral y, sin JavaScript, dentro del formulario. */
+const contacts = [
+  ...hotel.phones.map((phone) => ({
+    href: telHref(phone),
+    label: t(locale, 'quote.contact.call', { phone }),
+    external: false,
+  })),
+  ...(whatsapp
+    ? [{ href: whatsapp, label: t(locale, 'quote.contact.whatsapp'), external: true }]
+    : []),
+  ...(hotel.email
+    ? [
+        {
+          href: `mailto:${hotel.email}`,
+          label: t(locale, 'quote.contact.email', { email: hotel.email }),
+          external: false,
+        },
+      ]
+    : []),
+];
+const req = t(locale, 'form.required');
+
+const range = (min: number, max: number) =>
+  Array.from({ length: max - min + 1 }, (_, i) => {
+    const value = String(min + i);
+    return { value, label: value };
+  });
+const ageLabel = (n: number) =>
+  n === 0
+    ? t(locale, 'quote.age.zero')
+    : t(locale, n === 1 ? 'quote.age.one' : 'quote.age.other', { n });
+const ageOptions = [
+  { value: '', label: t(locale, 'quote.field.childAge.choose') },
+  ...range(QUOTE_LIMITS.childAge.min, QUOTE_LIMITS.childAge.max).map(({ value }) => ({
+    value,
+    label: ageLabel(Number(value)),
+  })),
+];
 ---
 
-<Page locale={locale} current="quote" label={t(locale, 'quote.title')} hideStickyCta noindex>
+<Page
+  locale={locale}
+  current="quote"
+  label={t(locale, 'quote.title')}
+  description={t(locale, 'quote.lead')}
+  hideStickyCta
+>
   <PageHeader locale={locale} title={t(locale, 'quote.title')} lead={t(locale, 'quote.lead')} />
-  <Section narrow tight>
-    <Alert variant="info">{t(locale, 'quote.soon')}</Alert>
-    <ul role="list" class="contacts">
-      {hotel.phones.map((phone) => (
-        <li>
-          <a href={telHref(phone)}>{phone}</a>
-        </li>
-      ))}
-      {hotel.email && (
-        <li>
-          <a href={`mailto:${hotel.email}`}>{hotel.email}</a>
-        </li>
-      )}
-    </ul>
+  <Section tight>
+    <div class="layout">
+      <div class="main">
+        <div class="result" data-quote-success tabindex="-1" hidden>
+          <Alert variant="success" title={t(locale, 'quote.success.title')}>
+            <p data-success-text></p>
+            <p class="result__next">{t(locale, 'quote.success.next')}</p>
+          </Alert>
+          <h2 class="result__title">{t(locale, 'quote.success.summary')}</h2>
+          <dl class="result__summary" data-success-summary></dl>
+          <Button variant="secondary" data-quote-again>
+            {t(locale, 'quote.success.again')}
+          </Button>
+        </div>
+
+        <form
+          class="form"
+          novalidate
+          data-quote-form
+          data-endpoint={`${siteConfig.apiBaseUrl}/receiveCotization`}
+          data-timezone={siteConfig.timeZone}
+          data-locale={locale}
+          data-hotel={hotelName}
+          data-email={hotel.email}
+          data-whatsapp={whatsapp ?? ''}
+          data-messages={JSON.stringify(quoteMessages(locale))}
+          data-room-names={JSON.stringify(
+            Object.fromEntries(roomTypes.map((room) => [room.slug, room.name.es])),
+          )}
+        >
+          <noscript>
+            <Alert variant="info">
+              <p>{t(locale, 'quote.noscript')}</p>
+              <ul role="list" class="contact-list">
+                {contacts.map((contact) => (
+                  <li>
+                    <a
+                      href={contact.href}
+                      target={contact.external ? '_blank' : undefined}
+                      rel={contact.external ? 'noopener noreferrer' : undefined}
+                    >
+                      {contact.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Alert>
+          </noscript>
+
+          <ErrorSummary id="quote-errors" title={t(locale, 'form.error.title')} errors={[]} />
+
+          <div class="result" data-quote-failure tabindex="-1" hidden>
+            <Alert variant="danger" title={t(locale, 'quote.failure.title')}>
+              <p>{t(locale, 'quote.failure.text')}</p>
+            </Alert>
+            <div class="result__actions">
+              {whatsapp && (
+                <Button
+                  href={whatsapp}
+                  variant="secondary"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-fallback-whatsapp
+                >
+                  {t(locale, 'quote.failure.whatsapp')}
+                </Button>
+              )}
+              {hotel.email && (
+                <Button href={`mailto:${hotel.email}`} variant="secondary" data-fallback-email>
+                  {t(locale, 'quote.failure.email')}
+                </Button>
+              )}
+              {hotel.phones.slice(0, 1).map((phone) => (
+                <Button href={telHref(phone)} variant="secondary">
+                  {t(locale, 'quote.contact.call', { phone })}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <fieldset>
+            <legend>{t(locale, 'quote.legend.stay')}</legend>
+            <div class="row">
+              <Field
+                id="checkin"
+                label={t(locale, 'quote.field.checkin')}
+                type="date"
+                required
+                requiredLabel={req}
+                liveError
+              />
+              <Field
+                id="checkout"
+                label={t(locale, 'quote.field.checkout')}
+                type="date"
+                required
+                requiredLabel={req}
+                liveError
+              />
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>{t(locale, 'quote.legend.guests')}</legend>
+            <div class="row row--3">
+              <Field
+                id="adults"
+                label={t(locale, 'quote.field.adults')}
+                type="select"
+                options={range(QUOTE_LIMITS.adults.min, QUOTE_LIMITS.adults.max)}
+                value="2"
+                liveError
+              />
+              <Field
+                id="children"
+                label={t(locale, 'quote.field.children')}
+                type="select"
+                options={range(QUOTE_LIMITS.children.min, QUOTE_LIMITS.children.max)}
+                value="0"
+                liveError
+              />
+              <Field
+                id="rooms"
+                label={t(locale, 'quote.field.rooms')}
+                type="select"
+                options={range(QUOTE_LIMITS.rooms.min, QUOTE_LIMITS.rooms.max)}
+                value="1"
+                liveError
+              />
+            </div>
+            <div class="row row--3" data-child-ages></div>
+            <template data-child-age-template>
+              <Field
+                id="child-age-0"
+                name="childAge"
+                label={t(locale, 'quote.field.childAge', { n: '{n}' })}
+                type="select"
+                required
+                requiredLabel={req}
+                options={ageOptions}
+                value=""
+                liveError
+              />
+            </template>
+            <Checkbox id="roomsTogether" label={t(locale, 'quote.field.together')} hidden />
+            {roomTypes.length > 0 && (
+              <Field
+                id="roomType"
+                label={t(locale, 'quote.field.roomType')}
+                type="select"
+                options={[
+                  { value: '', label: t(locale, 'quote.field.roomType.any') },
+                  ...roomTypes.map((room) => ({
+                    value: room.slug,
+                    label: pick(room.name, locale),
+                  })),
+                ]}
+                value=""
+              />
+            )}
+          </fieldset>
+
+          <fieldset>
+            <legend>{t(locale, 'quote.legend.contact')}</legend>
+            <Field
+              id="name"
+              label={t(locale, 'quote.field.name')}
+              required
+              requiredLabel={req}
+              autocomplete="name"
+              maxlength={QUOTE_LIMITS.name.max}
+              liveError
+            />
+            <Field
+              id="email"
+              label={t(locale, 'quote.field.email')}
+              type="email"
+              required
+              requiredLabel={req}
+              autocomplete="email"
+              inputmode="email"
+              hint={t(locale, 'quote.field.email.hint')}
+              maxlength={QUOTE_LIMITS.email.max}
+              liveError
+            />
+            <Field
+              id="phone"
+              label={t(locale, 'quote.field.phone')}
+              type="tel"
+              autocomplete="tel"
+              inputmode="tel"
+              hint={t(locale, 'quote.field.phone.hint')}
+              maxlength={30}
+              liveError
+            />
+            <Field
+              id="address"
+              label={t(locale, 'quote.field.address')}
+              autocomplete="address-level2"
+              hint={t(locale, 'quote.field.address.hint')}
+              maxlength={QUOTE_LIMITS.address.max}
+              liveError
+            />
+            <Field
+              id="notes"
+              label={t(locale, 'quote.field.notes')}
+              type="textarea"
+              hint={t(locale, 'quote.field.notes.hint')}
+              maxlength={QUOTE_LIMITS.notes.max}
+              liveError
+            />
+          </fieldset>
+
+          {/* Señuelo para bots: fuera de la vista, fuera del orden de tabulación y oculto a lectores de pantalla. */}
+          <div class="hp" aria-hidden="true">
+            <label for="website">{t(locale, 'quote.honeypot')}</label>
+            <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <Checkbox
+            id="privacy"
+            label={t(locale, 'quote.privacy.label')}
+            required
+            requiredLabel={req}
+            liveError
+          >
+            <p>
+              {t(locale, 'quote.privacy.text')}{' '}
+              <a href={routeUrl('policies', locale)}>{t(locale, 'quote.privacy.link')}</a>
+            </p>
+          </Checkbox>
+
+          {turnstileSiteKey && (
+            <div class="turnstile">
+              <div
+                class="cf-turnstile"
+                data-sitekey={turnstileSiteKey}
+                data-language={locale}
+              ></div>
+              <p id="turnstile-error" class="turnstile__error" role="alert" hidden>
+                {t(locale, 'quote.error.turnstile.required')}
+              </p>
+            </div>
+          )}
+
+          <div>
+            <Button
+              type="submit"
+              size="lg"
+              disabled
+              data-quote-submit
+              data-label-idle={t(locale, 'quote.submit')}
+              data-label-busy={t(locale, 'quote.sending')}
+            >
+              {t(locale, 'quote.submit')}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      <aside class="aside" aria-labelledby="quote-contact-title">
+        <h2 id="quote-contact-title">{t(locale, 'contact.title')}</h2>
+        <p>{t(locale, 'contact.lead')}</p>
+        <ul role="list" class="contact-list">
+          {contacts.map((contact) => (
+            <li>
+              <a
+                href={contact.href}
+                target={contact.external ? '_blank' : undefined}
+                rel={contact.external ? 'noopener noreferrer' : undefined}
+              >
+                {contact.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </aside>
+    </div>
   </Section>
 </Page>
 
+{turnstileSiteKey && (
+  <script
+    is:inline
+    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+    async
+    defer
+  ></script>
+)}
+
+<script>
+  import '../islands/quote-form.ts';
+</script>
+
 <style>
-  .contacts {
+  .layout {
+    display: grid;
+    gap: var(--space-7);
+    align-items: start;
+  }
+  @media (min-width: 64rem) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+    }
+  }
+  .main {
+    max-width: var(--container-narrow);
+  }
+  .form {
+    display: grid;
+    gap: var(--space-6);
+  }
+  .form[hidden] {
+    display: none;
+  }
+  fieldset {
+    display: grid;
+    gap: var(--space-5);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  legend {
+    margin-bottom: var(--space-4);
+    padding: 0;
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--color-brand);
+  }
+  .row {
+    display: grid;
+    gap: var(--space-5);
+  }
+  .row:empty {
+    display: none;
+  }
+  @media (min-width: 40rem) {
+    .row {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .row--3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .hp {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  .turnstile__error {
+    font-weight: 700;
+    color: var(--color-danger);
+  }
+  .result {
+    display: grid;
+    gap: var(--space-5);
+    margin-bottom: var(--space-6);
+  }
+  .result[hidden] {
+    display: none;
+  }
+  .result:focus {
+    outline: none;
+  }
+  .result:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 4px;
+  }
+  .result__next {
+    margin-top: var(--space-2);
+  }
+  .result__title {
+    font-size: var(--text-xl);
+  }
+  .result__summary {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+  }
+  .result__summary :global(dt) {
+    font-weight: 700;
+  }
+  .result__summary :global(dd) {
+    margin: 0;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+  }
+  .result__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .aside {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-raised);
+  }
+  .aside h2 {
+    font-size: var(--text-xl);
+  }
+  .contact-list {
     display: grid;
     gap: var(--space-1);
-    margin-top: var(--space-5);
   }
-  .contacts a {
+  .contact-list a {
     display: inline-flex;
     align-items: center;
     min-height: var(--tap-size);
-    font-size: var(--text-lg);
     font-weight: 700;
+    overflow-wrap: anywhere;
   }
 </style>

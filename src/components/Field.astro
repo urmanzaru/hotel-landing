@@ -21,6 +21,11 @@ interface Props {
   maxlength?: number;
   rows?: number;
   options?: { value: string; label: string }[];
+  /**
+   * Siempre renderiza el contenedor del error (oculto si no hay): así un script puede mostrar y quitar errores sin
+   * crear nodos nuevos (que no recibirían los estilos con ámbito del componente).
+   */
+  liveError?: boolean;
 }
 
 const {
@@ -40,10 +45,12 @@ const {
   maxlength,
   rows = 4,
   options = [],
+  liveError = false,
 } = Astro.props;
 
 const hintId = hint ? `${id}-hint` : undefined;
 const errorId = error ? `${id}-error` : undefined;
+const renderError = Boolean(error) || liveError;
 const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
 const common = {
   id,
@@ -89,8 +96,8 @@ const common = {
       {...common}
     />
   )}
-  {error && (
-    <p id={errorId} class="field__error">
+  {renderError && (
+    <p id={`${id}-error`} class="field__error" hidden={!error}>
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
         <path
           d="M12 7v6m0 4h.01"
@@ -101,7 +108,7 @@ const common = {
         />
         <circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2" />
       </svg>
-      {error}
+      <span data-error-text>{error}</span>
     </p>
   )}
 </div>
@@ -171,5 +178,8 @@ const common = {
   }
   .field__error svg {
     flex: none;
+  }
+  .field__error[hidden] {
+    display: none;
   }
 </style>

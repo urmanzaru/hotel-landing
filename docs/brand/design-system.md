@@ -82,8 +82,9 @@ Espaciado en base 4 px (`--space-1…10`), contenedor 72 rem, gutter fluido ≥ 
 | `Header` | Logo + nombre, menú de escritorio, enlace de idioma, CTA «Cotizar». En móvil, menú con `<details>` (**sin JavaScript**). |
 | `Footer` | Contacto con `tel:`/`mailto:`, navegación, políticas (solo si existen). |
 | `StickyQuoteBar` | Barra fija inferior «Solicitar cotización» en móvil/tablet. |
-| `Button` | `primary` · `secondary` · `ghost` · `light` (sobre fondo oscuro); `md`/`lg`; `aria-busy` y deshabilitado. Enlace si lleva `href`. |
-| `Field` | Etiqueta **siempre visible**, ayuda, error con icono, `aria-describedby`/`aria-invalid`, `inputmode`/`autocomplete`, texto de 16 px (evita el zoom de iOS). |
+| `Button` | `primary` · `secondary` · `ghost` · `light` (sobre fondo oscuro); `md`/`lg`; `aria-busy` y deshabilitado. Enlace si lleva `href`. Respeta `type` (por defecto `button`). |
+| `Field` | Etiqueta **siempre visible**, ayuda, error con icono, `aria-describedby`/`aria-invalid`, `inputmode`/`autocomplete`, texto de 16 px (evita el zoom de iOS). Con `liveError`, el contenedor del error existe siempre (oculto) para que un script lo rellene. |
+| `Checkbox` | Casilla de 24 px y etiqueta clicable ≥ 44 px; ayuda en el slot (fuera de la etiqueta, admite enlaces); error y `liveError` como `Field`. |
 | `ErrorSummary` | Resumen enfocable con enlaces a cada campo (el script del formulario lo enfoca tras un envío fallido). |
 | `Alert` | `info`/`success`/`danger`; los errores usan `role="alert"`. |
 | `RoomCard` | Foto en arco, nombre como **único enlace que cubre toda la tarjeta**, ficha y CTA. |

@@ -24,7 +24,7 @@ const hasErrors = errors.length > 0;
   <h2 id={`${id}-title`} class="summary__title">
     {title}
   </h2>
-  <ul role="list">
+  <ul role="list" data-error-list>
     {errors.map((error) => (
       <li>
         <a href={`#${error.id}`}>{error.message}</a>
@@ -50,11 +50,12 @@ const hasErrors = errors.length > 0;
     font-size: var(--text-lg);
     color: var(--color-danger);
   }
-  .summary ul {
+  /* `:global`: el script del formulario crea los elementos de la lista, que no llevan el atributo de ámbito. */
+  .summary :global(ul) {
     display: grid;
     gap: var(--space-1);
   }
-  .summary a {
+  .summary :global(a) {
     color: var(--color-danger);
     font-weight: 700;
   }

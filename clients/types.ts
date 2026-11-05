@@ -26,6 +26,12 @@ export interface ClientConfig {
   /** Contacto opcional que no viene del PMS. */
   contact: { whatsapp?: string };
   /**
+   * Anti-spam opcional del formulario de cotización (playbook 05). Con `turnstileSiteKey` la página carga
+   * Cloudflare Turnstile y exige completarlo antes de enviar. Es un TERCERO (script de Cloudflare): activarlo solo si
+   * el spam se vuelve un problema. Mientras la API no verifique el token, solo frena a bots que usan el navegador.
+   */
+  quote?: { turnstileSiteKey?: string };
+  /**
    * Nombre base de los logos web en `public/brand/` (`<logoFile>-96.webp`, `-192.webp`, `-384.webp`).
    * Si falta, la cabecera muestra solo el nombre del hotel.
    */

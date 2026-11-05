@@ -8,6 +8,7 @@ import path from 'node:path';
 import Alert from '../components/Alert.astro';
 import Breadcrumb from '../components/Breadcrumb.astro';
 import Button from '../components/Button.astro';
+import Checkbox from '../components/Checkbox.astro';
 import ErrorSummary from '../components/ErrorSummary.astro';
 import Field from '../components/Field.astro';
 import Gallery from '../components/Gallery.astro';
@@ -231,6 +232,12 @@ const hotel = {
           value="2"
         />
         <Field id="f-notes" label="Comentarios" type="textarea" maxlength={500} />
+        <Checkbox id="f-together" label="Prefiero que las habitaciones estén juntas" />
+        <Checkbox id="f-privacy" label="Acepto el uso de mis datos" required>
+          <p>
+            Solo para responder a esta solicitud. <a href="#formularios">Aviso de privacidad</a>
+          </p>
+        </Checkbox>
         <Button type="submit">Enviar solicitud</Button>
       </form>
       <div class="form">
@@ -255,6 +262,12 @@ const hotel = {
           type="date"
           required
           error="La salida debe ser después de la llegada"
+        />
+        <Checkbox
+          id="e-privacy"
+          label="Acepto el uso de mis datos"
+          required
+          error="Acepta el uso de tus datos para poder enviar la solicitud"
         />
         <Alert variant="info" title="Antes de enviar">
           La fecha de salida debe ser posterior a la de llegada.

@@ -256,12 +256,9 @@ test.describe('datos de muestra y 404', () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
   });
 
-  test('la página de cotización provisional no muestra la barra fija ni se indexa', async ({
-    page,
-  }) => {
+  test('la página de cotización no muestra la barra fija de «Cotizar»', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/cotizar/');
     await expect(page.locator('.sticky-cta')).toHaveCount(0);
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/);
   });
 });

@@ -11,7 +11,14 @@ type Props = HTMLAttributes<'button'> & {
   size?: 'md' | 'lg';
 };
 
-const { href, variant = 'primary', size = 'md', class: className, ...attrs } = Astro.props;
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  class: className,
+  type = 'button',
+  ...attrs
+} = Astro.props;
 const classes = ['btn', `btn--${variant}`, `btn--${size}`, className];
 ---
 
@@ -20,7 +27,7 @@ const classes = ['btn', `btn--${variant}`, `btn--${size}`, className];
     <slot />
   </a>
 ) : (
-  <button type="button" class:list={classes} {...attrs}>
+  <button type={type} class:list={classes} {...attrs}>
     <slot />
   </button>
 )}
