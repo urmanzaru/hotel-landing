@@ -18,16 +18,20 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "data:fetch": "node --env-file-if-exists=.env --import tsx scripts/fetch-snapshot.ts",
-    "verify": "npm run check && npm run lint && npm run test && npm run build"
+    "verify": "npm run check && npm run lint && npm run test && npm run build",
+    "api:verify": "node --env-file-if-exists=.env --import tsx scripts/verify-api-contract.ts",
+    "images:check": "node --import tsx scripts/check-images.ts"
   },
   "dependencies": {
     "@astrojs/sitemap": "3.7.4",
     "astro": "7.4.5",
+    "sharp": "0.35.5",
     "zod": "4.6.7"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.12",
     "@playwright/test": "1.63.0",
+    "@types/node": "22.20.5",
     "eslint": "10.14.0",
     "eslint-plugin-astro": "3.2.1",
     "prettier": "3.9.10",

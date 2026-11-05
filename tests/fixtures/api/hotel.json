@@ -1,0 +1,91 @@
+[
+  {
+    "id": "5fe1ffca46f0600fec51463d",
+    "logo": {
+      "id": "5fe1ffca46f0600fec51463a",
+      "name": "hotel_lacabana.jpeg",
+      "urlImage": "imagen/5fe1ffca46f0600fec51463b",
+      "contentType": "image/png",
+      "order": 1
+    },
+    "logoSelected": "5fe1ffca46f0600fec51463b",
+    "url": "http://localhost:4202",
+    "nameSpanish": "Hotel La Cabaña de Puerto Ángel",
+    "nameEnglish": "La Cabaña Hotel",
+    "categorySpanish": "Higiénico, confortable y familiar",
+    "categoryEnglish": "",
+    "descriptionSpanish": "Hotel familiar frente al mar.",
+    "descriptionEnglish": "Family hotel by the sea.",
+    "departureTime": "12:00",
+    "entryTime": "",
+    "phones": "000 000 0001, 000 000 0002 / 000 000 0003",
+    "email": "reservas@example.com",
+    "contact": "Persona de contacto (no debe publicarse)",
+    "businessName": "RAZON SOCIAL SA DE CV",
+    "rfc": "XAXX010101000",
+    "regimenCFDI": "hotelero",
+    "address": {
+      "id": "x",
+      "reference": "A una cuadra de la playa",
+      "state": "Oaxaca",
+      "postalCode": "70900",
+      "city": "Puerto Ángel",
+      "country": "México",
+      "colony": "Centro",
+      "latitude": "-1811156.55",
+      "longitude": "19.1561651"
+    },
+    "productOrServiceDefault": { "id": "p", "esName": "SERVICIO DE HOSPEDAJE", "price": 0 },
+    "images": [
+      {
+        "id": "6018facbe13600442e6aaa88",
+        "name": "Vista Terraza",
+        "description": "Terraza con vista al mar",
+        "urlImage": "imagen/6018facbe13600442e6aaa87",
+        "contentType": "image/jpeg",
+        "author": "",
+        "linkCopyright": ""
+      },
+      {
+        "id": "6018facbe13600442e6aaa90",
+        "name": "Alberca",
+        "urlImage": "imagen/6018facbe13600442e6aaa89",
+        "contentType": "image/jpeg",
+        "author": "Adam Jones",
+        "linkCopyright": "https://example.com/foto"
+      },
+      { "id": "sin-url", "name": "Imagen sin urlImage (se descarta)" }
+    ],
+    "politics": [
+      {
+        "id": "pol1",
+        "esName": "Políticas de Privacidad",
+        "enName": "Privacy Policy",
+        "esDescription": "Texto de privacidad.",
+        "enDescription": "Privacy text.",
+        "status": true
+      },
+      {
+        "id": "pol2",
+        "esName": "Política inactiva",
+        "enName": "",
+        "esDescription": "No debe mostrarse.",
+        "enDescription": "",
+        "status": false
+      }
+    ],
+    "fechaCreacion": "2020-12-22T14:16:42.833Z",
+    "status": true
+  },
+  {
+    "id": "62d3549c7418894690fde2ef",
+    "nameSpanish": "Luna Mar Y Sol Cabañas",
+    "nameEnglish": "",
+    "businessName": "OTRO HOTEL SA",
+    "rfc": "XEXX010101000",
+    "phones": "000 000 9999",
+    "email": "otro@example.com",
+    "images": [],
+    "politics": []
+  }
+]

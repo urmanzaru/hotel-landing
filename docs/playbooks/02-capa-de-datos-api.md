@@ -1,5 +1,8 @@
 # 02 — Capa de datos (API del PMS)
 
+> **Estado: 🟡 código completo y probado con fixtures; falta el paso 1 (verificar el contrato contra la API real),
+> que ejecuta el equipo con acceso a la API.**
+
 **Objetivo:** un cliente de API tipado y validado, un `snapshot.json` público y seguro, y un pipeline de imágenes
 tolerante a fallos. Todo en **build**; el navegador no consume esta capa.
 
@@ -8,99 +11,115 @@ tolerante a fallos. Todo en **build**; el navegador no consume esta capa.
 `clients/lacabana.config.ts`. La URL y el origen de producción se definen más adelante y solo cambian variables
 de entorno.
 
-> **El paso 1 (verificar el contrato) necesita acceso real a la API.** El entorno de Claude Code en la nube no
-> la alcanza (su proxy bloquea el host). Se ejecuta en tu equipo, o se añade `apihotel-dev.spinoff.website` a los
-> hosts permitidos del entorno de la sesión.
-
-## Entregables
-
-- `src/data/client.ts`, `schemas.ts`, `mappers.ts`; `scripts/fetch-snapshot.ts`, `scripts/check-images.ts`.
-- `src/data/snapshot.json` (generado, no versionado) y su tipo `Snapshot`.
-- Fixtures **sanitizadas** en `tests/fixtures/` (sin RFC ni datos de otros hoteles).
-
 ## Endpoints que se usan en v1
 
-| Endpoint | Uso | Cuándo |
-|---|---|---|
-| `GET /hotel` | Datos públicos del hotel, imágenes, políticas | Build |
-| `GET /roomType` | Tipos de habitación activos | Build |
-| `GET /imagen/{id}` | Binarios de imágenes | Build (descarga y optimiza) |
-| `POST /receiveCotization` | Enviar cotización | Runtime (playbook 05) |
+| Endpoint                  | Uso                                         | Cuándo                      |
+| ------------------------- | ------------------------------------------- | --------------------------- |
+| `GET /hotel`              | Datos públicos del hotel, imágenes, políticas | Build                     |
+| `GET /roomType`           | Tipos de habitación                         | Build                       |
+| `GET /imagen/{id}`        | Binarios de imágenes                        | Build (descarga y optimiza) |
+| `POST /receiveCotization` | Enviar cotización                           | Runtime (playbook 05)       |
 
-`GET /roomType/{id}` **no se usa**: el listado ya trae la misma forma y el detalle sería una llamada extra por
-tipo. `/card`, `/roomAvailable`, `/plan` y `/tariff` quedan fuera.
+`GET /roomType/{id}` **no se usa** (el listado ya trae la misma forma). `/card`, `/roomAvailable`, `/plan` y
+`/tariff` quedan fuera; el código no los referencia.
+
+## Entregables (hechos)
+
+| Archivo                           | Responsabilidad                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `src/data/schemas.ts`             | Esquemas zod **tolerantes** de la respuesta cruda (`looseObject`, elementos inválidos de un arreglo se descartan). |
+| `src/data/types.ts`               | Esquemas y tipos de la forma **pública** (`Snapshot`, `PublicHotel`, `PublicRoomType`, `ImageAsset`).              |
+| `src/data/client.ts`              | `createApiClient`: `Origin` fijo, timeout 10 s, 3 reintentos con backoff solo en red/timeout/5xx, errores tipados. |
+| `src/data/mappers.ts`             | Lista blanca de campos, normalización, selección por `HOTEL_ID`, slugs deterministas.                              |
+| `src/data/images.ts`              | Descarga con caché, WebP + respaldo JPEG/PNG en varios anchos, 404 → reporte (no rompe el build).                  |
+| `src/data/pipeline.ts`            | `runPipeline`: API → datos → imágenes → sanidad → archivo; respaldo con el último snapshot bueno.                  |
+| `src/data/load.ts`                | `getSnapshot()` / `getImage()` para las páginas (no importa `sharp`).                                              |
+| `src/data/check-images.ts`        | Verifica que el HTML de `dist/` no referencie imágenes inexistentes.                                               |
+| `scripts/fetch-snapshot.ts`       | `npm run data:fetch`.                                                                                              |
+| `scripts/verify-api-contract.ts`  | `npm run api:verify` (paso 1; solo `GET` y un `OPTIONS`, **nunca `POST`**).                                        |
+| `scripts/check-images.ts`         | `npm run images:check`.                                                                                            |
+| `tests/unit/*`, `tests/fixtures/` | 45 pruebas con fixtures sintéticas (ver `tests/fixtures/README.md`).                                               |
 
 ## Pasos
 
-### 1. Verificar el contrato real (spike de 15 min, desde una máquina con acceso)
+### 1. Verificar el contrato real — ⏳ lo ejecuta quien tenga acceso a la API
 
-- [ ] `curl -s "$PUBLIC_API_URL/hotel"` responde 200 sin `Origin` y trae los hoteles.
-- [ ] `curl -s -H "Origin: $SITE_ORIGIN" "$PUBLIC_API_URL/roomType"` responde 200 con los tipos del hotel correcto.
-- [ ] Mismo `curl` con un `Origin` no registrado → 403 (confirma el modelo multi-tenant).
-- [ ] Confirmar que **Node puede fijar `Origin`**: un `fetch` de Node (undici) con `headers: { Origin }` debe
-      devolver 200. Si el runtime lo ignorara, usar `undici.request` o `node:https`.
-- [ ] Guardar las respuestas, sanitizadas, como fixtures.
+Desde un equipo que alcance `apihotel-dev.spinoff.website` (el entorno de Claude Code en la nube no lo alcanza):
 
-### 2. Cliente de API
+```bash
+npm ci
+npm run api:verify                # verifica y muestra un resumen
+npm run api:verify -- --record    # además guarda fixtures reales sanitizadas en tests/fixtures/recorded/
+```
 
-- [ ] `client.ts`: `apiGet(path)` con `Origin` desde la config, timeout (10 s), reintentos (3, backoff
-      exponencial) solo en 5xx y red; no reintentar 4xx. **No enviar** `Empresa` (la API la ignora).
-- [ ] Desenvolver `{ status, message }`: `status` es **string** (`"Success"`/`"Error"`), no number. Si `status`
-      no es `"Success"` o `message` es `null` → error tipado.
+Lo que comprueba (✔ obligatorio, ⚠ informativo):
 
-### 3. Esquemas y normalización (zod, tolerantes)
+- ✔ `GET /hotel` sin `Origin` responde 200 con hoteles, y el `HOTEL_ID` existe.
+- ✔ `GET /roomType` con `Origin: http://localhost:4202` responde 200 **desde Node** (confirma que Node puede fijar
+  `Origin`) y los tipos pertenecen al hotel esperado.
+- ✔ `GET /roomType` con un `Origin` no registrado responde 403 (confirma el modelo multi-tenant).
+- ✔ El preflight `OPTIONS /receiveCotization` permite `Content-Type` (necesario para el `POST` JSON del 05).
+- ⚠ Cabecera CORS y cuántas imágenes dan 404.
 
-- [ ] Esquemas con `.passthrough()` solo en el borde; el resto del sitio usa los tipos *normalizados*.
-- [ ] `chargeType` llega como string (`"NOCHE"`), no como enum numérico → mapear a `'night' | 'hour'`.
-- [ ] `politics` vacío → `[]`. `images` vacío → `[]`. Campos `en*` ausentes → caer al español y registrar aviso.
-- [ ] Coordenadas: la API devuelve valores inválidos (`latitude "-1811156.55"`). Usar
-      `clients/<cliente>.config.ts → coordinates` y no la API.
+El resultado se pega de vuelta para ajustar esquemas si la realidad difiere de `api-endpoints.md`. Si el script
+muestra `ENOTFOUND`, `ECONNREFUSED` o un error TLS, ese texto es la causa real (se extrae de `error.cause`).
 
-### 4. Selección del hotel y lista blanca
+### 2. Cliente de API — ✅
 
-- [ ] Elegir el hotel por `HOTEL_ID` (config). Si no existe en la respuesta → fallar el build con mensaje claro.
-      (El sitio actual elige por heurística de URL y en producción apunta al hotel equivocado, ver observación 5
-      de `api-endpoints.md`.)
-- [ ] Copiar al snapshot **solo**: nombres/categoría/descripción (es/en), logo, teléfonos, correo, dirección,
-      horarios de entrada/salida, imágenes, políticas. **Nunca**: `rfc`, `businessName`, `regimenCFDI`,
-      `productOrServiceDefault`, `*Selected`, otros hoteles.
-- [ ] Tipos de habitación: filtrar `status === true`; ordenar por nombre o por orden definido; adultos, niños,
-      descripción es/en, `photoMain` + `images`.
+`Origin` configurable; **no** se envía `Empresa` (la API la ignora). `status` se trata como string
+(`"Success"`/`"Error"`). 403 no se reintenta; 5xx, red y timeout sí. Probado contra un servidor HTTP local que
+confirma que `Origin` llega al servidor.
 
-### 5. Pipeline de imágenes
+### 3. Esquemas y normalización — ✅
 
-- [ ] Reunir todos los `urlImage` del snapshot (relativos: `imagen/<id>`; anteponer la URL base si no empiezan
-      con `http`).
-- [ ] Descargar con concurrencia limitada (6), caché en `.cache/images/<id>` para no repetir en cada build.
-- [ ] Respuesta 404 u otra no válida → registrar en `reports/broken-images.json`, marcar la imagen como
-      ausente en el snapshot. Las páginas usan un placeholder de marca; **nunca** un `<img>` roto.
-      (Hoy: 16 de 133 dan 404.)
-- [ ] Generar AVIF/WebP y JPEG de fallback en anchos 480/768/1200/1920 con `sharp`; conservar `width/height`
-      para evitar saltos de maquetación; generar `blurhash` o color dominante opcional.
-- [ ] Respetar autoría: el API trae `author` y `linkCopyright`; mostrarlos donde corresponda (galería).
+- `chargeType` string (`"NOCHE"`, `"HORA"`) y numérico (1/2) → `'night' | 'hour'`.
+- Textos sin traducción al inglés → se usa el español y se cuenta en `stats.englishFallbacks`.
+- Coordenadas: **no se toman de la API** (valores inválidos); van en `clients/<cliente>.config.ts`.
+- Los slugs de habitaciones con nombre repetido se desempatan **por id**, así no cambian si la API reordena la lista
+  (hay una prueba que lo demuestra).
 
-### 6. Snapshot y política de fallo
+### 4. Selección del hotel y lista blanca — ✅
 
-- [ ] `snapshot.json` incluye `generatedAt`, hash de contenido y estadísticas.
-- [ ] Umbrales de sanidad antes de aceptar un snapshot: hotel presente, nombre no vacío, ≥1 tipo de habitación
-      activo, ≥1 imagen válida. Si falla → usar el último snapshot bueno (caché de CI); si no hay → salir con
-      código ≠ 0.
-- [ ] `check-images.ts` verifica en `dist/` que ninguna ruta de imagen referenciada falta.
+Se elige por `HOTEL_ID` exacto; si no existe, el build falla con los ids que sí devolvió la API. El snapshot se arma
+campo por campo: RFC, razón social, régimen CFDI, producto por defecto, persona de contacto, latitud/longitud y
+**cualquier otro hotel** no llegan al archivo (prueba explícita con datos fiscales en la fixture).
+
+### 5. Pipeline de imágenes — ✅
+
+- La clave de cada imagen es el **id del archivo** (último segmento de `urlImage`), que es el que coincide con los
+  `*Selected` del PMS; el `id` del objeto imagen puede ser otro.
+- Descarga con concurrencia 6 y caché en `.cache/images/`. Sin `Origin` (como un `<img>`; se confirma en el paso 1).
+- WebP + respaldo (JPEG, o PNG si hay transparencia) en 480/768/1200/1920 px, sin ampliar, en `public/img/<id>/`.
+- 404, error de red o archivo no decodificable → entra en `reports/broken-images.json` y la imagen se omite del
+  snapshot; las entidades siguen refiriéndose a su id y la página usa un placeholder.
+- Se dejó **AVIF fuera** respecto al plan original: multiplica el tiempo de build y WebP cubre >95 % de navegadores.
+  Se puede añadir en `images.ts` si se mide que compensa.
+
+### 6. Snapshot y política de fallo — ✅
+
+- `snapshot.json` incluye `generatedAt`, `contentHash` (estable entre builds con los mismos datos) y estadísticas.
+- Se acepta solo si hay: nombre de hotel, ≥1 tipo de habitación activo y ≥1 imagen disponible.
+- Si la API falla **o** el resultado no pasa esa sanidad → se usa el último snapshot bueno (`.cache/`, que CI debe
+  restaurar) y las imágenes se rehacen desde la caché sin red. Sin caché → `exit 1` y **no se escribe snapshot**.
 
 ## Criterios de aceptación
 
 ```bash
-npm run data:fetch                                   # genera snapshot.json
-npx tsx -e "import s from './src/data/snapshot.json' assert {type:'json'}; console.log(Object.keys(s))"
-! grep -riE '"rfc"|regimenCFDI|businessName' src/data/snapshot.json   # no hay datos fiscales
-npm test                                             # unit con fixtures: éxito, 403, 500, message null, imagen 404
+npm run verify              # tipos + lint + 45 pruebas + build
+npm run data:fetch          # con acceso a la API: genera src/data/snapshot.json
+npm run images:check        # tras `npm run build` con páginas que usen imágenes
 ```
 
-- El build sin red **y sin caché** falla con mensaje claro; con caché usa el snapshot anterior.
-- Ninguna llamada a `/card`, `/roomAvailable`, `/plan`, `/tariff` en el código (`grep`).
+- [x] El snapshot no contiene datos fiscales ni de otros hoteles (prueba automática).
+- [x] Sin red y sin caché, `data:fetch` falla con mensaje claro y código ≠ 0.
+- [x] Con caché, el build continúa con el último snapshot bueno.
+- [x] Ninguna llamada a `/card`, `/roomAvailable`, `/plan`, `/tariff` en el código.
+- [ ] **Pendiente:** `npm run api:verify` en verde contra la API de dev (paso 1) y `npm run data:fetch` con datos reales.
 
 ## Riesgos
 
-- El `Origin` de CI/producción difiere del de dev → variable por entorno, nunca hardcodeada.
+- El `Origin` de CI/producción difiere del de dev → variable por entorno (`SITE_ORIGIN`), nunca hardcodeada.
 - Imágenes originales muy pesadas → el pipeline reduce; vigilar el tiempo de build (objetivo < 3 min).
-- Cambios de esquema en el PMS → los esquemas zod fallan ruidosamente en el build, no en producción.
+- Cambios de esquema en el PMS → los esquemas fallan ruidosamente en el build, no en producción.
+- Una imagen reemplazada en el PMS **conservando el mismo id** no se re-descarga mientras exista en `.cache/images/`
+  (el PMS genera un id nuevo al subir otra; si no, borrar la caché).

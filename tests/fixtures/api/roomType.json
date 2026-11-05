@@ -1,0 +1,88 @@
+[
+  {
+    "id": "5fe8b15b46f06010a040962b",
+    "esName": "Sencilla I",
+    "enName": "Single 1",
+    "esDescription": "Cama matrimonial",
+    "enDescription": "Double bed",
+    "status": false,
+    "nAdults": 2,
+    "nChilds": 0,
+    "chargeType": "NOCHE",
+    "images": [],
+    "photoMain": null,
+    "rooms": null,
+    "hotelSelected": "5fe1ffca46f0600fec51463d"
+  },
+  {
+    "id": "5fe8b15b46f06010a0409630",
+    "esName": "Doble con vista al mar",
+    "enName": "Double with sea view",
+    "esDescription": "Dos camas matrimoniales",
+    "enDescription": "Two double beds",
+    "status": true,
+    "nAdults": 4,
+    "nChilds": 2,
+    "chargeType": "NOCHE",
+    "images": [
+      {
+        "id": "601ffe3de1360045aab69e2f",
+        "name": "Cama matrimonial",
+        "urlImage": "imagen/601ffe3de1360045aab69e2e"
+      },
+      {
+        "id": "601ffe3de1360045aab69e31",
+        "name": "Baño",
+        "urlImage": "imagen/601ffe3de1360045aab69e30"
+      }
+    ],
+    "photoMain": {
+      "id": "5fe8b15b46f06010a040962c",
+      "urlImage": "imagen/5fe8b15b46f06010a040962a"
+    },
+    "hotelSelected": "5fe1ffca46f0600fec51463d"
+  },
+  {
+    "id": "5fe8b15b46f06010a0409640",
+    "esName": "Familiar",
+    "enName": "",
+    "esDescription": "Hasta seis personas",
+    "enDescription": "",
+    "status": true,
+    "nAdults": 4,
+    "nChilds": 2,
+    "chargeType": "NOCHE",
+    "images": [],
+    "photoMain": { "id": "f1", "urlImage": "imagen/5fe8b15b46f06010a040964a" },
+    "hotelSelected": "5fe1ffca46f0600fec51463d"
+  },
+  {
+    "id": "5fe8b15b46f06010a0409641",
+    "esName": "Familiar",
+    "enName": "Family",
+    "esDescription": "Mismo nombre que otra habitación",
+    "enDescription": "Same name as another room",
+    "status": true,
+    "nAdults": 3,
+    "nChilds": 1,
+    "chargeType": "NOCHE",
+    "images": [],
+    "photoMain": null,
+    "hotelSelected": "5fe1ffca46f0600fec51463d"
+  },
+  {
+    "id": "5fe8b15b46f06010a0409650",
+    "esName": "Pasadía",
+    "enName": "Day use",
+    "esDescription": "Uso por horas",
+    "enDescription": "Hourly use",
+    "status": true,
+    "nAdults": 2,
+    "nChilds": 0,
+    "chargeType": "HORA",
+    "images": [],
+    "photoMain": null,
+    "hotelSelected": "5fe1ffca46f0600fec51463d"
+  },
+  { "id": "sin-nombre", "status": true, "esDescription": "Sin esName: se descarta" }
+]

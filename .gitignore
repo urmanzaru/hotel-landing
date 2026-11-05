@@ -12,6 +12,8 @@ dist/
 .cache/
 reports/
 src/data/snapshot.json
+public/img/
+tests/fixtures/recorded/
 
 # pruebas
 test-results/

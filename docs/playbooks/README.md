@@ -15,7 +15,7 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | --- | -------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------- | ------------ |
 | 00  | [Decisiones y arquitectura](./00-decisiones-y-arquitectura.md) | Stack elegido, alcance v1, riesgos                                    | —                          | ✅ Aprobado  |
 | 01  | [Scaffold del proyecto](./01-scaffold-proyecto.md)             | Repo Astro + TS con lint/test/build                                   | 00                         | ✅ Completo  |
-| 02  | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md)       | Cliente de API, snapshot, pipeline de imágenes                        | 01                         | ⏭ Siguiente |
+| 02  | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md)       | Cliente de API, snapshot, pipeline de imágenes                        | 01                         | 🟡 Falta verificar contra la API real |
 | 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | Pendiente    |
 | 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | Pendiente    |
 | 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | Pendiente    |
