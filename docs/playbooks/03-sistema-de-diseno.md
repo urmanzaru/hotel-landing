@@ -3,15 +3,15 @@
 **Objetivo:** identidad visual coherente y tematizable por cliente: tokens, tipografía, componentes base y reglas de
 movimiento, derivados del logo de La Cabaña y de la guía que genere `ui-ux-pro-max`.
 
-**Prerrequisitos:** 01 completo. El plugin instalado **por ti** en Claude Code:
+**Prerrequisitos:** 01 completo. Skill `ui-ux-pro-max` instalada como skill de proyecto (✅, ver `README.md`):
 
-```
-/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
-/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+```bash
+python3 .claude/skills/ui-ux-pro-max/scripts/search.py "<consulta>" --design-system -p "Hotel La Cabaña" --output-dir .
 ```
 
-> No puedo ejecutar `/plugin` desde esta sesión. Cuando esté instalado, este playbook se ejecuta pidiendo a la
-> skill el sistema de diseño con el brief de abajo y guardando su salida en `docs/brand/design-system.md`.
+> Se ejecuta con la ruta del proyecto, no con `${CLAUDE_PLUGIN_ROOT}` (ver `CLAUDE.md`). Con `--persist` la skill
+> genera `design-system/<proyecto>/MASTER.md`; este playbook guarda ahí su salida y las decisiones tomadas.
+> Pasar `--stack astro` para las guías específicas de la pila.
 
 ## Brief para la skill
 

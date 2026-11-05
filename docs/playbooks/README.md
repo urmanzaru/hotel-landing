@@ -16,7 +16,7 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 | 00  | [Decisiones y arquitectura](./00-decisiones-y-arquitectura.md) | Stack elegido, alcance v1, riesgos                                    | —                          | ✅ Aprobado  |
 | 01  | [Scaffold del proyecto](./01-scaffold-proyecto.md)             | Repo Astro + TS con lint/test/build                                   | 00                         | ✅ Completo  |
 | 02  | [Capa de datos (API del PMS)](./02-capa-de-datos-api.md)       | Cliente de API, snapshot, pipeline de imágenes                        | 01                         | 🟡 Falta verificar contra la API real |
-| 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | Pendiente    |
+| 03  | [Sistema de diseño](./03-sistema-de-diseno.md)                 | Tokens, tipografía, componentes base (ui-ux-pro-max)                  | 01                         | ⏭ Siguiente |
 | 04  | [Páginas y contenido](./04-paginas-y-contenido.md)             | Inicio, habitaciones, galería, ubicación, contacto, políticas (es/en) | 02, 03                     | Pendiente    |
 | 05  | [Cotización](./05-cotizacion.md)                               | Formulario que hace `POST /receiveCotization`                         | 02, 03                     | Pendiente    |
 | 06  | [SEO, rendimiento y accesibilidad](./06-seo-rendimiento-accesibilidad.md) | Metadatos, JSON-LD, presupuestos, WCAG AA                  | 04, 05                     | Pendiente    |
@@ -50,25 +50,22 @@ FTP.** El servidor solo tiene que servir archivos: no necesita PHP, Node ni conf
 3. **¿FTP plano o FTPS?** Se prueba en 07; si solo hay FTP plano, se rota la contraseña tras el lanzamiento.
 4. **Idiomas.** Se asume español (principal) + inglés.
 
-## Cómo activar el plugin ui-ux-pro-max (necesario para el playbook 03)
+## Skill ui-ux-pro-max (necesaria para el playbook 03) — ✅ instalada
 
-Los comandos de tu mensaje son *comandos de barra de Claude Code*: se escriben en el cuadro de mensaje (no en una
-terminal del sistema), de uno en uno:
+Como el trabajo se hace en la nube y `/plugin` no está disponible, la skill se instaló **como skill de proyecto**
+con el comando oficial de su repositorio:
 
-```
-/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
-```
-
-Espera la confirmación y luego:
-
-```
-/plugin install ui-ux-pro-max@ui-ux-pro-max-skill
+```bash
+npx skills add https://github.com/nextlevelbuilder/ui-ux-pro-max-skill --skill ui-ux-pro-max --agent claude-code -y
 ```
 
-Después reinicia la sesión (o ejecuta `/reload-plugins`) para que cargue. Para no depender de esto, el repo incluye
-`.claude/settings.json` con el marketplace y el plugin ya declarados: al abrir el proyecto en Claude Code y aceptar
-la confianza de carpeta, ofrece instalarlo. Si la interfaz que uses no acepta `/plugin`, usa Claude Code en la
-terminal (`claude`) dentro de la carpeta del proyecto.
+- Queda en `.claude/skills/ui-ux-pro-max/` y se versiona (`skills-lock.json` fija el hash). Cualquier sesión de
+  Claude Code que abra el repo la tiene, sin instalar nada.
+- Antes de añadirla se revisó: son datos CSV/JSON y scripts Python locales, **sin red, sin `subprocess`, sin
+  `eval`**, y sin archivos ejecutables.
+- Los scripts se invocan con `python3 .claude/skills/ui-ux-pro-max/scripts/search.py ...` desde la raíz (el
+  `SKILL.md` usa `${CLAUDE_PLUGIN_ROOT}`, que solo existe en modo plugin; ver `CLAUDE.md`).
+- Actualizar: `npx skills update`. Quitar: `npx skills remove ui-ux-pro-max`.
 
 ## Supuestos (corrígelos si no aplican)
 
